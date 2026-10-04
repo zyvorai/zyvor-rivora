@@ -1,17 +1,41 @@
+<div align="center">
+
 # Rivora
 
 [![CI](https://github.com/zyvorai/zyvor-rivora/actions/workflows/ci.yml/badge.svg)](https://github.com/zyvorai/zyvor-rivora/actions/workflows/ci.yml)
-[![Docs](https://img.shields.io/badge/docs-zyvorai.github.io%2Fzyvor--rivora-blue)](https://zyvorai.github.io/zyvor-rivora/)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![Go](https://img.shields.io/badge/Go-rivorad%20%C2%B7%20controller%20%C2%B7%20CLI-00ADD8?logo=go&logoColor=white)](go.mod)
+[![eBPF](https://img.shields.io/badge/eBPF-XDP%20%C2%B7%20TCX-2997ff)](bpf)
+[![Docs](https://img.shields.io/badge/Docs-zyvorai.github.io%2Fzyvor--rivora-0071e3)](https://zyvorai.github.io/zyvor-rivora/)
 
-![Rivora — eBPF-native load balancer for Kubernetes and bare metal](docs/social/rivora-hero-dark.jpg)
+[![Book a demo](https://img.shields.io/badge/Book_a_demo-0071e3?style=for-the-badge)](https://zyvor.dev/schedule?utm_source=github&utm_medium=rivora&utm_campaign=readme_hero)
+[![30-day PoC](https://img.shields.io/badge/30--day_PoC-000000?style=for-the-badge)](https://zyvor.dev/poc?utm_source=github&utm_medium=rivora&utm_campaign=readme_hero)
+[![Deploy](https://img.shields.io/badge/Deploy_with_Helm_or_one_CLI-2997ff?style=for-the-badge)](#quickstart)
 
-**eBPF-native load balancing for every environment.**
+![Rivora — eBPF L4 load balancer: Maglev hashing in XDP](docs/social/rivora-hero-dark.jpg)
 
-Rivora is a Layer-4 load balancer that forwards packets in the kernel with XDP. It owns VIPs, backend
-selection, health checking and NAT/DSR, for Kubernetes (`Service` of `type: LoadBalancer`, Gateway API) and for
-bare metal (a YAML file). It is CNI-independent and does not require Cilium: it attaches its own XDP/TCX
-programs and owns its maps under `/sys/fs/bpf/rivora-lb`.
+### Load balancing in XDP. No Cilium required.
+
+**A Layer-4 load balancer that forwards in the kernel before the network stack sees the packet.** Full-NAT, L2 and L3 direct return, weighted Maglev, BGP + BFD and Kubernetes `type: LoadBalancer`, on any CNI or on bare metal from a YAML file.
+
+**XDP fast path** · **3 forwarding modes** · **IPv4 and IPv6 as equals** · **BGP + BFD ECMP** · **Any CNI, no Cilium**
+
+</div>
+
+---
+
+## Why Rivora
+
+| When this happens… | Rivora gives you… |
+|---|---|
+| Your bare-metal cluster needs `type: LoadBalancer` and the answer is "install Cilium" | A CNI-independent balancer with its own XDP/TCX programs and maps under `/sys/fs/bpf/rivora-lb` |
+| Every Service turns into netfilter rules on every node | Backend selection with weighted Maglev in XDP, before the network stack |
+| Replies hairpin through the balancer and eat its bandwidth | L2 DSR, or L3 DSR over IP-in-IP / GRE to backends any number of routed hops away |
+| One node answering ARP is your whole HA story | BGP + BFD active/active ECMP with health-gated `/32` and `/128` routes on every node |
+| Restarting the balancer means a traffic blip | Restart adoption of the pinned datapath, and no gap at all with `-persist-datapath` |
+| Some workloads are not in Kubernetes | The same dataplane from a static YAML file, with KubeVirt VMs and external IPs as Service backends |
+
+![Capabilities at a glance: Forward, Announce, Kubernetes, Operate](docs/ux/readme-capabilities.jpg)
 
 ## Highlights
 
@@ -34,34 +58,30 @@ programs and owns its maps under `/sys/fs/bpf/rivora-lb`.
 - **Tested against real traffic**: about twenty network-namespace selftests run in CI, plus unit tests under
   `-race`, with mutation checks on the new behaviour.
 
-> **Status: pre-1.0, and honest about it.** The single-node dataplane, IPv4 and IPv6, all three forwarding modes,
-> BGP and the operational features above are implemented and verified by the selftests on a real kernel. The
-> Kubernetes Service and IPAM path, KubeVirt and external backends were verified on a live cluster in the early
-> releases. **Not yet verified on a real cluster:** the Gateway API traffic path, `ServicePolicy`, `BGPPeer`,
-> `externalTrafficPolicy: Local` and restart adoption in Kubernetes mode (tests use fake clients). **Not yet
-> verified against a real router:** BGP is tested against gobgp only. **Not measured:** performance.
-> **Not possible by design:** L7 routing (`HTTPRoute`, `GRPCRoute`, `TLSRoute`). See
-> [Limitations](website/docs/core-concepts/limitations.md) for the complete list.
+---
 
-## Contents
+## Rivora vs MetalLB + kube-proxy
 
-- [How it works](#how-it-works)
-- [Forwarding modes](#forwarding-modes)
-- [Architecture](#architecture)
-- [Quickstart](#quickstart)
-- [Kubernetes](#kubernetes)
-- [BGP/BFD HA](#bgpbfd-ha)
-- [IPv6](#ipv6)
-- [What the dataplane handles](#what-the-dataplane-handles)
-- [Operating Rivora](#operating-rivora)
-- [Securing the API](#securing-the-api)
-- [Building and testing](#building-and-testing)
-- [Documentation](#documentation)
-- [Limitations and roadmap](#limitations-and-roadmap)
-- [Repository](#repository)
-- [License](#license)
+![Rivora vs MetalLB + kube-proxy: announce and forward in one component, in the kernel](docs/ux/readme-vs.jpg)
 
-## How it works
+| | **Rivora** | **MetalLB + kube-proxy** (typical bare-metal setup) |
+|---|---|---|
+| Address allocation | `AddressPool` IPAM, IPv4 and sparse IPv6 `/64` | MetalLB `IPAddressPool` |
+| Announcement | ARP + NDP speaker, BGP + BFD ECMP | L2 (ARP/NDP) or BGP |
+| Packet forwarding | XDP, weighted Maglev, before the network stack | kube-proxy iptables or IPVS rules |
+| Direct server return | L2 DSR and L3 DSR (IP-in-IP, GRE) | Not available; replies go back through the node |
+| Health checks | Active TCP and HTTP probes, live drain and weight | Endpoint readiness from the kubelet |
+| Outside Kubernetes | Same dataplane from a static YAML file | Kubernetes only |
+| L4 Gateway API | `TCPRoute` and `UDPRoute` | Not part of MetalLB |
+| **Choose MetalLB when** | | You only need addresses announced, kube-proxy forwarding is enough, and you want the most widely deployed option |
+
+Rivora is pre-1.0 and does not do L7 routing by design; see [Maturity](#maturity).
+
+---
+
+## How it fits together
+
+![One daemon per node; the kernel does the forwarding](docs/ux/readme-how-it-works.jpg)
 
 - **`bpf/xdp_ingress.c`**, the XDP program: match the VIP, optionally rate-limit new TCP connections per source
   (a per-CPU token bucket; a single array lookup when unconfigured), pick a backend (sticky per flow via
@@ -82,7 +102,7 @@ programs and owns its maps under `/sys/fs/bpf/rivora-lb`.
 
 Every command and flag: [Commands, flags and environment](website/docs/operations/cli.md).
 
-## Forwarding modes
+### Forwarding modes
 
 | | `nat` | `dsr` | `dsr-ipip` / `dsr-gre` |
 | --- | --- | --- | --- |
@@ -96,7 +116,7 @@ return path. L3 DSR lifts DSR's same-segment requirement at the cost of 20 to 44
 fragment, so an oversize packet is answered with "fragmentation needed" / "packet too big" and the client's
 path-MTU discovery adapts. Details: [Forwarding modes](website/docs/core-concepts/forwarding-modes.md).
 
-## Architecture
+### Architecture
 
 Two ways to get a VIP into the dataplane, one code path underneath:
 
@@ -127,6 +147,8 @@ Two ways to get a VIP into the dataplane, one code path underneath:
 
 A node runs static-YAML VIPs **or** Kubernetes-managed VIPs, not both. The packet path, the maps and how
 restarts are handled: [Architecture](website/docs/core-concepts/architecture.md).
+
+---
 
 ## Quickstart
 
@@ -426,9 +448,52 @@ scripts/                selftests, deploy-remote.sh, install-systemd.sh, install
 website/                the documentation site (Docusaurus)
 ```
 
-## License
+---
 
-Commercial subscriptions and support: see [docs/SUBSCRIPTION-MODEL.md](docs/SUBSCRIPTION-MODEL.md).
+## Maturity
 
-Apache License 2.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE). Report vulnerabilities privately: see
-[SECURITY.md](SECURITY.md).
+> **Pre-1.0, and honest about it.** The single-node dataplane, IPv4 and IPv6, all three forwarding modes,
+> BGP and the operational features above are implemented and verified by the selftests on a real kernel. The
+> Kubernetes Service and IPAM path, KubeVirt and external backends were verified on a live cluster in the early
+> releases. **Not yet verified on a real cluster:** the Gateway API traffic path, `ServicePolicy`, `BGPPeer`,
+> `externalTrafficPolicy: Local` and restart adoption in Kubernetes mode (tests use fake clients). **Not yet
+> verified against a real router:** BGP is tested against gobgp only. **Not measured:** performance.
+> **Not possible by design:** L7 routing (`HTTPRoute`, `GRPCRoute`, `TLSRoute`). See
+> [Limitations](website/docs/core-concepts/limitations.md) for the complete list.
+
+---
+
+## Part of the Zyvor stack
+
+| Product | Role next to Rivora |
+|---|---|
+| **Rivora** | eBPF L4 load balancer: XDP, Maglev, BGP, Kubernetes `LoadBalancer` |
+| **[Netra](https://github.com/zyvorai/zyvor-netra)** | eBPF network observability and emergency control on any CNI |
+| **[Paqtra](https://github.com/zyvorai/zyvor-paqtra)** | Flow tracing and drop explanations for Cilium clusters |
+| **[Zorvia](https://github.com/zyvorai/zyvor-zorvia)** | KubeVirt VM platform; its VMs can sit behind a Rivora Service like any Pod |
+
+→ [zyvor.dev](https://zyvor.dev)
+
+---
+
+## License and support
+
+Rivora is **free and open source** under the [Apache License 2.0](LICENSE) (see [NOTICE](NOTICE)). That does not change.
+
+**Zyvor Enterprise** adds what production teams ask for: supported releases, deployment and upgrade guidance, priority incident triage, a named technical contact and 24x7 critical intake. Plans and terms: [docs/SUBSCRIPTION-MODEL.md](docs/SUBSCRIPTION-MODEL.md) · [Pricing](https://zyvor.dev/pricing?utm_source=github&utm_medium=rivora&utm_campaign=readme_license) · [sales@zyvor.dev](mailto:sales@zyvor.dev).
+
+Report vulnerabilities privately per [SECURITY.md](SECURITY.md).
+
+---
+
+<div align="center">
+
+### Put Rivora in front of your next cluster
+
+[![Book a demo](https://img.shields.io/badge/Book_a_demo-0071e3?style=for-the-badge)](https://zyvor.dev/schedule?utm_source=github&utm_medium=rivora&utm_campaign=readme_footer)
+[![30-day PoC](https://img.shields.io/badge/Start_a_30--day_PoC-000000?style=for-the-badge)](https://zyvor.dev/poc?utm_source=github&utm_medium=rivora&utm_campaign=readme_footer)
+[![Pricing](https://img.shields.io/badge/Pricing-1d1d1f?style=for-the-badge)](https://zyvor.dev/pricing?utm_source=github&utm_medium=rivora&utm_campaign=readme_footer)
+[![Contact sales](https://img.shields.io/badge/Contact_sales-2997ff?style=for-the-badge)](mailto:sales@zyvor.dev?subject=Rivora)
+[![Star on GitHub](https://img.shields.io/github/stars/zyvorai/zyvor-rivora?style=for-the-badge&logo=github&label=Star&color=2997ff)](https://github.com/zyvorai/zyvor-rivora)
+
+</div>
