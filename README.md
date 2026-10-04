@@ -1,10 +1,10 @@
 # Rivora
 
-[![CI](https://github.com/zyvorai/rivora/actions/workflows/ci.yml/badge.svg)](https://github.com/zyvorai/rivora/actions/workflows/ci.yml)
-[![Docs](https://img.shields.io/badge/docs-zyvorai.github.io%2Frivora-blue)](https://zyvorai.github.io/rivora/)
+[![CI](https://github.com/zyvorai/zyvor-rivora/actions/workflows/ci.yml/badge.svg)](https://github.com/zyvorai/zyvor-rivora/actions/workflows/ci.yml)
+[![Docs](https://img.shields.io/badge/docs-zyvorai.github.io%2Fzyvor--rivora-blue)](https://zyvorai.github.io/zyvor-rivora/)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
-![Rivora — eBPF-native load balancer for Kubernetes and bare metal](docs/social/rivora-share-card.png)
+![Rivora — eBPF-native load balancer for Kubernetes and bare metal](docs/social/rivora-hero-dark.jpg)
 
 **eBPF-native load balancing for every environment.**
 
@@ -368,7 +368,7 @@ test, the console build and a vulnerability scan on every push. What each one pr
 
 ## Documentation
 
-The site is published at **[zyvorai.github.io/rivora](https://zyvorai.github.io/rivora/)** (sources under
+The site is published at **[zyvorai.github.io/zyvor-rivora](https://zyvorai.github.io/zyvor-rivora/)** (sources under
 [`website/`](website); `make docs-serve` to preview). The pages, in reading order:
 
 | | |
