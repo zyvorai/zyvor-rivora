@@ -2,7 +2,7 @@
 
 Built with [Docusaurus](https://docusaurus.io/) — same shape as
 [Netra](https://zyvorai.github.io/netra/). Live at
-https://zyvorai.github.io/rivora/.
+https://zyvorai.github.io/zyvor-rivora/.
 
 ## Local development
 
