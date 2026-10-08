@@ -8,7 +8,7 @@ require (
 	github.com/mdlayher/arp v0.0.0-20260528070854-93566ba168e9
 	github.com/mdlayher/ethernet v0.0.0-20220221185849-529eae5b6118
 	github.com/mdlayher/ndp v1.1.0
-	github.com/osrg/gobgp/v4 v4.9.0
+	github.com/osrg/gobgp/v4 v4.10.0
 	github.com/prometheus/client_golang v1.24.1
 	github.com/spf13/cobra v1.10.2
 	gopkg.in/yaml.v3 v3.0.1
