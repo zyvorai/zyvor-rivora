@@ -68,6 +68,7 @@ const config: Config = {
           position: 'left',
           label: 'Docs',
         },
+        {to: '/support', label: 'Support', position: 'right'},
         {
           href: 'https://github.com/zyvorai/zyvor-rivora',
           label: 'GitHub',
@@ -94,6 +95,7 @@ const config: Config = {
         {
           title: 'Project',
           items: [
+            {label: 'Support', to: '/support'},
             {label: 'GitHub', href: 'https://github.com/zyvorai/zyvor-rivora'},
             {
               label: 'License (Apache-2.0)',
