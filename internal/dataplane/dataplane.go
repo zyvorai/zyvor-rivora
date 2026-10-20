@@ -716,7 +716,11 @@ func (d *Dataplane) rebuildMaglevLocked(entry *serviceEntry, desired map[string]
 		backends[i] = maglev.Backend{Name: name, Weight: desired[name].Weight}
 	}
 
-	size := maglevClassFor(len(names))
+	var totalWeight uint64
+	for _, b := range backends {
+		totalWeight += uint64(maglev.NormalizeWeight(b.Weight))
+	}
+	size := maglevClassForWeight(len(names), totalWeight)
 	needNewExtent := entry.extent.size == 0 || size > entry.extent.size
 	target := entry.extent
 	if needNewExtent {

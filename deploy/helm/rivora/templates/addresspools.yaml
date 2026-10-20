@@ -9,6 +9,6 @@ metadata:
 spec:
   addresses:
     {{- toYaml (.addresses | required "each addressPools[] entry needs addresses") | nindent 4 }}
-  autoAssign: {{ .autoAssign | default true }}
+  autoAssign: {{ if hasKey . "autoAssign" }}{{ .autoAssign }}{{ else }}true{{ end }}
   avoidBuggyIPs: {{ .avoidBuggyIPs | default false }}
 {{- end }}

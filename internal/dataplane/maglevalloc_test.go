@@ -24,6 +24,25 @@ func TestMaglevClassFor(t *testing.T) {
 	}
 }
 
+func TestMaglevClassForWeight(t *testing.T) {
+	cases := []struct {
+		backends int
+		total    uint64
+		want     uint32
+	}{
+		{2, 2, 1031},        // unweighted: same as maglevClassFor
+		{2, 2000, 4099},     // 2 backends at weight 1000: 1031 would fail BuildTable
+		{66, 66000, 65537},  // beyond every class: largest, BuildTable reports the error
+		{1, 1 << 40, 65537}, // huge totals must not overflow
+	}
+	for _, c := range cases {
+		got := maglevClassForWeight(c.backends, c.total)
+		if got != c.want {
+			t.Errorf("maglevClassForWeight(%d, %d) = %d, want %d", c.backends, c.total, got, c.want)
+		}
+	}
+}
+
 func TestExtentAllocatorAllocDisjoint(t *testing.T) {
 	a := newExtentAllocator(1031)
 
