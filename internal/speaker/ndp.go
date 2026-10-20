@@ -60,6 +60,17 @@ func (s *Speaker) ndpAdvertisement(conn *ndp.Conn, target, dst netip.Addr) error
 	return conn.WriteTo(msg, nil, dst)
 }
 
+// ndpReplyDst is where to send the answer to a Neighbor Solicitation sent from
+// from. A solicitation from the unspecified address (::) is Duplicate Address
+// Detection; the sender has no usable address yet, so RFC 4861 7.2.4 says to
+// answer to all-nodes multicast (and writing to :: would just fail).
+func ndpReplyDst(from netip.Addr) netip.Addr {
+	if from.IsUnspecified() {
+		return netip.IPv6LinkLocalAllNodes()
+	}
+	return from
+}
+
 func (s *Speaker) ndpRespondLoop(ctx context.Context, conn *ndp.Conn) {
 	for {
 		select {
@@ -87,7 +98,7 @@ func (s *Speaker) ndpRespondLoop(ctx context.Context, conn *ndp.Conn) {
 		if !s.owns6(ns.TargetAddress) {
 			continue
 		}
-		if err := s.ndpAdvertisement(conn, ns.TargetAddress, from); err != nil {
+		if err := s.ndpAdvertisement(conn, ns.TargetAddress, ndpReplyDst(from)); err != nil {
 			s.logger.Error("reply to neighbor solicitation", "target", ns.TargetAddress, "err", err)
 		}
 	}

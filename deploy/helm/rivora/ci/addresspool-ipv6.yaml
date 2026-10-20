@@ -7,6 +7,6 @@ metadata:
   name: ci-ipv6
 spec:
   addresses:
-    - 2001:db8:ci::/64
+    - 2001:db8:c1::/64
   autoAssign: true
   avoidBuggyIPs: false
