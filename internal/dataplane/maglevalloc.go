@@ -25,7 +25,22 @@ var maglevSizeClasses = []uint32{1031, 4099, 16411, 65537}
 // maglevClassFor returns the smallest size class that fits backendCount
 // backends with good Maglev distribution.
 func maglevClassFor(backendCount int) uint32 {
-	want := uint32(backendCount) * 100
+	return maglevClassForWeight(backendCount, 0)
+}
+
+// maglevClassForWeight is maglevClassFor for weighted backends: BuildTable
+// gives each backend one virtual entry per unit of weight and requires the
+// table to be larger than their total, so the class must also exceed
+// totalWeight (with 2x headroom for distribution quality).
+func maglevClassForWeight(backendCount int, totalWeight uint64) uint32 {
+	w := uint64(backendCount) * 100
+	if t := totalWeight * 2; t > w {
+		w = t
+	}
+	want := uint32(w)
+	if w > uint64(maglevSizeClasses[len(maglevSizeClasses)-1]) {
+		want = maglevSizeClasses[len(maglevSizeClasses)-1]
+	}
 	if want < 1024 {
 		want = 1024
 	}
