@@ -4,10 +4,13 @@ package bgp
 
 import (
 	"context"
+	"sort"
 	"strings"
 	"time"
 
 	"github.com/osrg/gobgp/v4/api"
+
+	"github.com/zyvorai/rivora/internal/config"
 )
 
 // PeerStatus is one configured peer's session, as seen at the moment of a
@@ -62,9 +65,17 @@ func (sp *Speaker) Snapshot() Snapshot {
 	snap := Snapshot{AdvertiseErrors: sp.advertiseErrors, WithdrawErrors: sp.withdrawErrors}
 	sp.statMu.Unlock()
 
-	// Configured peers in configured order, so the output is stable and a peer
-	// gobgp failed to report still appears (as down) instead of vanishing.
-	for _, cp := range sp.cfg.Peers {
+	// Running peers (static config plus any added or removed by SetPeers) in
+	// address order, so the output is stable and a peer gobgp failed to report
+	// still appears (as down) instead of vanishing.
+	sp.peerMu.Lock()
+	running := make([]config.BGPPeer, 0, len(sp.peers))
+	for _, cp := range sp.peers {
+		running = append(running, cp)
+	}
+	sp.peerMu.Unlock()
+	sort.Slice(running, func(i, j int) bool { return running[i].Address < running[j].Address })
+	for _, cp := range running {
 		ps := PeerStatus{Address: cp.Address, ASN: cp.ASN, State: "UNKNOWN", StateChanges: changes[cp.Address]}
 		if p, ok := states[cp.Address]; ok {
 			// gobgp's enum prints as SESSION_STATE_ESTABLISHED; drop the prefix.

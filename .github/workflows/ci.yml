@@ -131,7 +131,10 @@ jobs:
         sample = yaml.safe_load(open("deploy/helm/rivora/ci/addresspool-ipv6.yaml"))
         assert sample["apiVersion"] == "rivora.zyvor.dev/v1alpha1"
         assert sample["kind"] == "AddressPool"
-        assert "2001:db8:ci::/64" in sample["spec"]["addresses"]
+        assert "2001:db8:c1::/64" in sample["spec"]["addresses"]
+        import ipaddress
+        for a in sample["spec"]["addresses"]:
+            ipaddress.ip_network(a)  # the CRD schema has no format check, so parse here
         print("AddressPool CRD + IPv6 sample OK")
         PY
   # Exercises the rivora CLI (cmd/rivora) against a real API server — a

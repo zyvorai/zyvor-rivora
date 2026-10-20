@@ -108,3 +108,29 @@ func TestSnapshotCountsAdvertiseFailures(t *testing.T) {
 		t.Errorf("AdvertisedIPv6 = %d, want 0: the route was never accepted", s.AdvertisedIPv6)
 	}
 }
+
+// Peers added through SetPeers (BGPPeer resources) must show up in the
+// snapshot, and ones removed must leave it; the static config is only the
+// starting set.
+func TestSnapshotFollowsSetPeers(t *testing.T) {
+	_, port := startFakePeerAt(t, "127.0.0.1", peerASN, ourASN)
+	cfg := config.BGP{Enabled: true, ASN: ourASN, RouterID: ourRouterID}
+	sp, _ := startSpeaker(t, cfg, &fakeSource{}, map[string]uint32{"127.0.0.1": uint32(port)})
+
+	if n := len(sp.Snapshot().Peers); n != 0 {
+		t.Fatalf("peers before SetPeers = %d, want 0", n)
+	}
+	p := config.BGPPeer{Address: "127.0.0.1", ASN: peerASN}
+	if _, err := sp.SetPeers([]config.BGPPeer{p}); err != nil {
+		t.Fatal(err)
+	}
+	if s := sp.Snapshot(); len(s.Peers) != 1 || s.Peers[0].Address != "127.0.0.1" || s.Peers[0].ASN != peerASN {
+		t.Fatalf("snapshot peers after add = %+v, want the added peer", s.Peers)
+	}
+	if _, err := sp.SetPeers(nil); err != nil {
+		t.Fatal(err)
+	}
+	if n := len(sp.Snapshot().Peers); n != 0 {
+		t.Errorf("snapshot still lists %d removed peer(s)", n)
+	}
+}
