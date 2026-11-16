@@ -113,13 +113,13 @@ vips:
 
 | Key | Meaning |
 | --- | --- |
-| `type` | `tcp` (default) or `http`. |
+| `type` | `tcp` (default), `http`, or `https`. |
 | `port` | Probe this port instead of the backend's service port. **Required for a range VIP**; the way to health-check a UDP VIP (which has no TCP port to connect to). |
-| `path` | HTTP only. Default `/`, must start with `/`. |
-| `host` | HTTP only. The `Host` header; default is the backend address. |
-| `expectStatus` | HTTP only. `"200"` or a range; default `200-399`. Redirects are not followed. |
+| `path` | HTTP/HTTPS only. Default `/`, must start with `/`. |
+| `host` | HTTP/HTTPS only. The `Host` header; default is the backend address. For `https` also used as TLS SNI. |
+| `expectStatus` | HTTP/HTTPS only. `"200"` or a range; default `200-399`. Redirects are not followed. |
 
-See [Health checks](runbook.md#health-checks-tcp-and-http).
+See [Health checks](runbook.md#health-checks-tcp-http-and-https).
 
 ## Validation rules
 

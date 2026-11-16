@@ -42,7 +42,7 @@ of the design; the last is about how much of it has been proven where.
   `trafficDistribution`, `healthCheckNodePort`.
 - **`sessionAffinity: ClientIP`** has no timeout (stickiness is a function of the source address and the
   current backend set), and everyone behind one NAT is one client.
-- **Health checks** are TCP or HTTP. No HTTPS, gRPC or UDP-protocol probes; the timing is global rather than
+- **Health checks** are TCP, HTTP or HTTPS (HTTPS skips certificate verification). No gRPC or UDP-protocol probes; the timing is global rather than
   per VIP.
 - **Operator drains and weight overrides are not persisted**: a restart reverts to the configured state.
 - **Flow tables are fixed size** (65,536 entries per affinity and NAT table) and LRU: at capacity a live flow

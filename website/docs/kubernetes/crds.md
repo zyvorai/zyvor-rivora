@@ -63,7 +63,7 @@ spec:
 | Field | Meaning |
 | --- | --- |
 | `targetRef.name` | **Required.** The Service, in the policy's namespace. `targetRef.kind` may only be `Service`. |
-| `healthCheck` | `type` (`tcp`, `http`), `port`, and for `http` `path`, `host`, `expectStatus`. Replaces the default TCP connect. |
+| `healthCheck` | `type` (`tcp`, `http`, `https`), `port`, and for `http`/`https` `path`, `host`, `expectStatus`. Replaces the default TCP connect. HTTPS skips certificate verification; `host` is also TLS SNI. |
 | `rateLimit` | `perSourcePacketsPerSecond` and `burst`, both above 0. Per-source new-connection (SYN) limit that replaces the node-wide limit for this Service's VIPs. |
 | `weights` | `default` and `nodes` (node name to weight), 1 to 1000. An endpoint gets its node's weight, else `default`, else 1. |
 | `bgp.communities` | Communities added to this Service's route. |

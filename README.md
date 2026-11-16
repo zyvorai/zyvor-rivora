@@ -45,7 +45,7 @@
   errors steered to the right backend, sparse `/64` IPAM, dual-stack Services.
 - **Weighted Maglev** consistent hashing with graceful draining, per-flow stickiness, `sessionAffinity:
   clientIP`, and per-VIP or node-wide per-source SYN rate limiting.
-- **Health checking**: active TCP and HTTP probes, live `drain` and `weight` from the CLI or API.
+- **Health checking**: active TCP, HTTP and HTTPS probes, live `drain` and `weight` from the CLI or API.
 - **Port ranges and multi-port VIPs** (passive FTP, RTP, game servers).
 - **Kubernetes**: Service/EndpointSlice reconciler, `AddressPool` IPAM, the L2 ARP+NDP speaker,
   `externalTrafficPolicy: Local` (with BGP), Gateway API `TCPRoute`/`UDPRoute` with `allowedRoutes` and
@@ -70,7 +70,7 @@
 | Announcement | ARP + NDP speaker, BGP + BFD ECMP | L2 (ARP/NDP) or BGP |
 | Packet forwarding | XDP, weighted Maglev, before the network stack | kube-proxy iptables or IPVS rules |
 | Direct server return | L2 DSR and L3 DSR (IP-in-IP, GRE) | Not available; replies go back through the node |
-| Health checks | Active TCP and HTTP probes, live drain and weight | Endpoint readiness from the kubelet |
+| Health checks | Active TCP, HTTP and HTTPS probes, live drain and weight | Endpoint readiness from the kubelet |
 | Outside Kubernetes | Same dataplane from a static YAML file | Kubernetes only |
 | L4 Gateway API | `TCPRoute` and `UDPRoute` | Not part of MetalLB |
 | **Choose MetalLB when** | | You only need addresses announced, kube-proxy forwarding is enough, and you want the most widely deployed option |
@@ -335,7 +335,7 @@ The limits are spelled out in the [runbook](website/docs/operations/runbook.md#v
 - **Live operations**: `rivoractl drain|undrain ID`, `rivoractl weight ID N [--vip ...]`; not persisted across a
   restart. `rivoractl validate FILE` then `systemctl reload rivorad` (SIGHUP) applies an edited config's VIPs
   without touching unchanged ones.
-- **Health checks**: a TCP connect by default; per VIP, `healthCheck: {type: http, path: ..., expectStatus: ...}`
+- **Health checks**: a TCP connect by default; per VIP, `healthCheck: {type: http|https, path: ..., expectStatus: ...}`
   judges the application, or `port:` probes a separate port (required for UDP and port-range VIPs).
 - **Restarts**: `-persist-datapath` pins the XDP/TCX links so the datapath keeps forwarding while `rivorad` is
   down and the next start hot-swaps the program (`rivorad -detach` removes it).
@@ -409,7 +409,7 @@ Read [Limitations](website/docs/core-concepts/limitations.md) before production.
 - **By design**: no L7 (HTTP/gRPC/SNI) routing; TCP and UDP only; one interface per node; full-NAT flow state is
   not shared between nodes; Kubernetes VIPs are full-NAT only.
 - **Behaviours**: out-of-order fragments are lost; IPv6 Routing/AH/ESP headers are not balanced; L3 DSR needs
-  path MTU headroom; health checks are TCP and HTTP only; drains and weight overrides are not persisted; flow
+  path MTU headroom; health checks are TCP/HTTP/HTTPS (no gRPC or UDP probes yet); drains and weight overrides are not persisted; flow
   tables are fixed-size LRUs.
 - **Unverified**: real-cluster Gateway API traffic, `ServicePolicy`, `BGPPeer` and Kubernetes restart adoption;
   BGP against FRR/BIRD; performance; kernels other than 6.8.
@@ -436,7 +436,7 @@ internal/gatewayapi/    Gateway/TCPRoute/UDPRoute reconciler, attachment, status
 internal/ipam/ ipamctrl/    address pools and the controller's reconcile logic
 internal/speaker/       L2 ARP + NDP responder
 internal/bgp/ bgppeers/     gobgp speaker (peer changes, per-peer route limits) and BGPPeer resources
-internal/healthcheck/   TCP and HTTP probes
+internal/healthcheck/   TCP, HTTP and HTTPS probes
 internal/maglev/        weighted Maglev table generation
 internal/initsync/      first-pass tracking for startup pruning
 internal/api/ apiclient/    HTTP API, auth, audit, embedded console; rivoractl's client

@@ -58,7 +58,7 @@ A node runs **either** static-YAML VIPs **or** Kubernetes-managed VIPs, not both
 | `internal/gatewayapi` | Gateway, TCPRoute and UDPRoute reconciler, attachment rules and status. |
 | `internal/speaker` | L2 ARP + NDP responder behind one cluster-wide Lease. |
 | `internal/bgp`, `internal/bgppeers` | gobgp speaker; `BGPPeer` resources. |
-| `internal/healthcheck` | Active TCP and HTTP probes. |
+| `internal/healthcheck` | Active TCP, HTTP and HTTPS probes. |
 | `internal/maglev` | Weighted Maglev table generation. |
 | `internal/initsync` | Tells `rivorad` when each reconciler has finished its first pass, so leftovers can be pruned safely. |
 

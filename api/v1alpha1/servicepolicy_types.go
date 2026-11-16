@@ -59,12 +59,13 @@ type PolicyTargetRef struct {
 
 // HealthCheckPolicy mirrors config.ProbeSpec.
 type HealthCheckPolicy struct {
-	// Type is tcp (default) or http.
+	// Type is tcp (default), http, or https.
 	Type string `json:"type,omitempty"`
 	// Port probes this port instead of the endpoint's service port. 0 means the
 	// service port.
 	Port uint16 `json:"port,omitempty"`
-	// Path, Host and ExpectStatus apply to type http only.
+	// Path, Host and ExpectStatus apply to type http and https only. For https,
+	// Host is also used as TLS SNI; certificate verification is skipped.
 	Path         string `json:"path,omitempty"`
 	Host         string `json:"host,omitempty"`
 	ExpectStatus string `json:"expectStatus,omitempty"`

@@ -40,8 +40,9 @@ that only sets `healthCheck` changes only that.
 ## What each setting does
 
 - **`healthCheck`** is the same probe a static config's `healthCheck` takes (see
-  [the runbook](../operations/runbook.md)): `tcp` (default) or `http`, an optional
-  probe `port`, and for `http` a `path`, `host` and `expectStatus`.
+  [the runbook](../operations/runbook.md)): `tcp` (default), `http` or `https`, an optional
+  probe `port`, and for `http`/`https` a `path`, `host` and `expectStatus`. HTTPS
+  skips certificate verification; `host` is also TLS SNI.
 - **`rateLimit`** caps how fast **one source address** may open new TCP
   connections (SYN packets) to this Service's VIPs. It **replaces** the node-wide
   `-rate-limit` for these VIPs, in either direction: a generous policy exempts a
