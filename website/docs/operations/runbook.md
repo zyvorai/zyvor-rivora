@@ -321,12 +321,12 @@ Not implemented: topology-aware routing (`trafficDistribution`), `internalTraffi
 (that exists for external load balancers to probe a node; here `rivorad` is the load
 balancer).
 
-## Health checks: TCP and HTTP
+## Health checks: TCP, HTTP and HTTPS
 
 By default each backend is probed with a TCP connect to its service port. That
 proves the port accepts connections and nothing more: a backend whose app is
 wedged, returning 500s or still warming up stays "healthy" and keeps receiving
-traffic. Give a VIP an HTTP probe to judge the app itself:
+traffic. Give a VIP an HTTP or HTTPS probe to judge the app itself:
 
 ```yaml
 vips:
@@ -335,11 +335,11 @@ vips:
     protocol: tcp
     mode: nat
     healthCheck:
-      type: http
+      type: http              # or https
       path: /healthz          # default "/"
       expectStatus: 200-299   # "200" or a range; default 200-399
       port: 8081              # optional: a separate health port
-      host: app.internal      # optional Host header
+      host: app.internal      # optional Host header (and SNI for https)
     backends: [{address: 10.0.1.11, port: 8080}]
 ```
 
@@ -347,7 +347,11 @@ vips:
   `expectStatus`. Redirects are **not followed**, only counted, so a `302` passes
   the default `200-399` and fails `expectStatus: 200`. Anything else fails: a
   connect error, a timeout, a backend that accepts and never replies, a service
-  that isn't HTTP.
+  that isn't HTTP(S), or (for `https`) a TLS handshake failure.
+- **`https` skips certificate verification.** Probes dial by backend address
+  (often an IP), and health endpoints commonly present self-signed or
+  name-mismatched certificates. When `host` is set it is used as both the Host
+  header and TLS SNI.
 - **Every probe is a fresh connection**, so a backend that has stopped accepting
   new connections is noticed rather than masked by a kept-alive one. Proxy
   environment variables are ignored: the probe reaches the backend itself.
@@ -366,7 +370,7 @@ vips:
 - **Kubernetes:** a Service's probe comes from its [`ServicePolicy`](../kubernetes/service-policy.md)
   (`spec.healthCheck`, the same fields as above). A Service without one, and every VIP a Gateway
   produces, uses the TCP connect.
-- **Not covered yet:** `https` (there is no TLS probe), gRPC, and per-backend probe settings.
+- **Not covered yet:** gRPC, UDP probes, and per-backend / per-VIP probe timing.
 
 To see it working, `rivora_backend_healthy` drops to `0` for a backend whose
 health endpoint fails while a plain TCP connect to its service port still

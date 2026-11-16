@@ -50,11 +50,11 @@ func TestCompilePolicyRejectsBadInput(t *testing.T) {
 	}{
 		{"empty is valid", func(*v1alpha1.ServicePolicySpec) {}, ""},
 		{"wrong kind", func(s *v1alpha1.ServicePolicySpec) { s.TargetRef.Kind = "Gateway" }, "only Service"},
-		{"unknown probe type", func(s *v1alpha1.ServicePolicySpec) { s.HealthCheck = &v1alpha1.HealthCheckPolicy{Type: "grpc"} }, "tcp or http"},
+		{"unknown probe type", func(s *v1alpha1.ServicePolicySpec) { s.HealthCheck = &v1alpha1.HealthCheckPolicy{Type: "grpc"} }, "tcp, http or https"},
 		{"http path without slash", func(s *v1alpha1.ServicePolicySpec) {
 			s.HealthCheck = &v1alpha1.HealthCheckPolicy{Type: "http", Path: "healthz"}
 		}, "must start with /"},
-		{"tcp probe with http fields", func(s *v1alpha1.ServicePolicySpec) { s.HealthCheck = &v1alpha1.HealthCheckPolicy{Path: "/x"} }, "only apply to type http"},
+		{"tcp probe with http fields", func(s *v1alpha1.ServicePolicySpec) { s.HealthCheck = &v1alpha1.HealthCheckPolicy{Path: "/x"} }, "only apply to type http or https"},
 		{"rate limit missing burst", func(s *v1alpha1.ServicePolicySpec) {
 			s.RateLimit = &v1alpha1.RateLimitPolicy{PerSourcePacketsPerSecond: 10}
 		}, "both be > 0"},

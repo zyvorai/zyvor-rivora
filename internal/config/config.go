@@ -180,6 +180,10 @@ const (
 	// wedged, erroring or still warming up is taken out of rotation even though
 	// its port is open.
 	ProbeHTTP ProbeType = "http"
+	// ProbeHTTPS is ProbeHTTP over TLS. Certificate verification is skipped: probes
+	// dial by backend address (often an IP), and health endpoints commonly use
+	// self-signed or mismatched certs. When Host is set it is also used as SNI.
+	ProbeHTTPS ProbeType = "https"
 )
 
 // DefaultExpectStatus is what an HTTP probe accepts unless told otherwise: any
@@ -194,16 +198,19 @@ const DefaultExpectStatus = "200-399"
 // a backend must agree on its probe; Config.Validate rejects a conflict rather
 // than letting one silently win.
 type ProbeSpec struct {
-	Type ProbeType `yaml:"type,omitempty"` // tcp (default) | http
+	Type ProbeType `yaml:"type,omitempty"` // tcp (default) | http | https
 	// Port probes this port instead of the backend's service port. Health
 	// endpoints are often on their own port, and a UDP service has no TCP port to
 	// connect to at all. 0 means the service port.
 	Port uint16 `yaml:"port,omitempty"`
-	// The remaining fields apply to type http only.
+	// The remaining fields apply to type http and https only.
 	Path         string `yaml:"path,omitempty"`         // default "/"; must start with "/"
-	Host         string `yaml:"host,omitempty"`         // Host header; default is the backend address
+	Host         string `yaml:"host,omitempty"`         // Host header (and SNI for https); default is the backend address
 	ExpectStatus string `yaml:"expectStatus,omitempty"` // "200" or "200-299"; default 200-399
 }
+
+// httpLike reports whether t uses path/host/expectStatus (plain or TLS).
+func (t ProbeType) httpLike() bool { return t == ProbeHTTP || t == ProbeHTTPS }
 
 // Effective returns the spec with defaults filled in, so callers and the
 // conflict check compare like with like (unset and explicit-default are equal).
@@ -211,7 +218,7 @@ func (p ProbeSpec) Effective() ProbeSpec {
 	if p.Type == "" {
 		p.Type = ProbeTCP
 	}
-	if p.Type == ProbeHTTP {
+	if p.Type.httpLike() {
 		if p.Path == "" {
 			p.Path = "/"
 		}
@@ -255,9 +262,9 @@ func (p ProbeSpec) Validate() error {
 	switch e := p.Effective(); e.Type {
 	case ProbeTCP:
 		if p.Path != "" || p.Host != "" || p.ExpectStatus != "" {
-			return fmt.Errorf("healthCheck: path, host and expectStatus only apply to type http")
+			return fmt.Errorf("healthCheck: path, host and expectStatus only apply to type http or https")
 		}
-	case ProbeHTTP:
+	case ProbeHTTP, ProbeHTTPS:
 		if !strings.HasPrefix(e.Path, "/") {
 			return fmt.Errorf("healthCheck: path %q must start with /", p.Path)
 		}
@@ -271,7 +278,7 @@ func (p ProbeSpec) Validate() error {
 			return fmt.Errorf("healthCheck: %w", err)
 		}
 	default:
-		return fmt.Errorf("healthCheck: type %q must be tcp or http", string(p.Type))
+		return fmt.Errorf("healthCheck: type %q must be tcp, http or https", string(p.Type))
 	}
 	return nil
 }

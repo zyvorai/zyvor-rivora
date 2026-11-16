@@ -268,10 +268,17 @@ func TestProbeSpecEffectiveDefaults(t *testing.T) {
 	if h.Path != "/" || h.ExpectStatus != DefaultExpectStatus {
 		t.Errorf("http defaults = path %q status %q, want / and %s", h.Path, h.ExpectStatus, DefaultExpectStatus)
 	}
+	s := ProbeSpec{Type: ProbeHTTPS}.Effective()
+	if s.Path != "/" || s.ExpectStatus != DefaultExpectStatus {
+		t.Errorf("https defaults = path %q status %q, want / and %s", s.Path, s.ExpectStatus, DefaultExpectStatus)
+	}
 	// Explicit-default and unset must compare equal, or the shared-backend
 	// conflict check would flag a VIP that spells out what another leaves unset.
 	if (ProbeSpec{Type: ProbeHTTP}).Effective() != (ProbeSpec{Type: ProbeHTTP, Path: "/", ExpectStatus: "200-399"}).Effective() {
 		t.Error("an http spec with defaults spelled out differs from one with them unset")
+	}
+	if (ProbeSpec{Type: ProbeHTTPS}).Effective() != (ProbeSpec{Type: ProbeHTTPS, Path: "/", ExpectStatus: "200-399"}).Effective() {
+		t.Error("an https spec with defaults spelled out differs from one with them unset")
 	}
 }
 
@@ -298,6 +305,7 @@ func TestProbeSpecValidate(t *testing.T) {
 	ok := []ProbeSpec{
 		{}, {Type: ProbeTCP}, {Type: ProbeTCP, Port: 8081},
 		{Type: ProbeHTTP}, {Type: ProbeHTTP, Path: "/healthz?deep=1", Host: "app.example", ExpectStatus: "200", Port: 9000},
+		{Type: ProbeHTTPS}, {Type: ProbeHTTPS, Path: "/ready", Host: "app.example", ExpectStatus: "200-299", Port: 8443},
 	}
 	for _, p := range ok {
 		if err := p.Validate(); err != nil {
@@ -305,14 +313,15 @@ func TestProbeSpecValidate(t *testing.T) {
 		}
 	}
 	bad := map[string]ProbeSpec{
-		"unknown type":            {Type: "grpc"},
-		"http path without slash": {Type: ProbeHTTP, Path: "healthz"},
-		"path with a space":       {Type: ProbeHTTP, Path: "/a b"},
-		"host with a slash":       {Type: ProbeHTTP, Host: "a/b"},
-		"bad status":              {Type: ProbeHTTP, ExpectStatus: "ok"},
-		"tcp with a path":         {Type: ProbeTCP, Path: "/x"},
-		"unset type with a path":  {Path: "/x"}, // a path means http was intended: don't silently ignore it
-		"tcp with a status":       {ExpectStatus: "200"},
+		"unknown type":             {Type: "grpc"},
+		"http path without slash":  {Type: ProbeHTTP, Path: "healthz"},
+		"https path without slash": {Type: ProbeHTTPS, Path: "ready"},
+		"path with a space":        {Type: ProbeHTTP, Path: "/a b"},
+		"host with a slash":        {Type: ProbeHTTP, Host: "a/b"},
+		"bad status":               {Type: ProbeHTTPS, ExpectStatus: "ok"},
+		"tcp with a path":          {Type: ProbeTCP, Path: "/x"},
+		"unset type with a path":   {Path: "/x"}, // a path means http was intended: don't silently ignore it
+		"tcp with a status":        {ExpectStatus: "200"},
 	}
 	for name, p := range bad {
 		if err := p.Validate(); err == nil {

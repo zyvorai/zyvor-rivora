@@ -29,7 +29,7 @@ internal/ipamctrl/      rivora-controller's reconcile logic
 internal/speaker/       L2 ARP and NDP responder
 internal/bgp/           gobgp speaker, peer changes, per-peer route limits
 internal/bgppeers/      BGPPeer resource controller
-internal/healthcheck/   active TCP and HTTP probes
+internal/healthcheck/   active TCP, HTTP and HTTPS probes
 internal/maglev/        weighted Maglev table generation
 internal/initsync/      first-pass tracking for startup pruning
 internal/api/           HTTP API, authentication, audit, embedded web console

@@ -56,7 +56,7 @@ spec:
                   properties:
                     type:
                       type: string
-                      enum: [tcp, http]
+                      enum: [tcp, http, https]
                       default: tcp
                     port:
                       type: integer
@@ -65,13 +65,15 @@ spec:
                       description: Probe this port instead of the endpoint's service port (0 = the service port).
                     path:
                       type: string
-                      description: HTTP only. Must start with "/" (default "/").
+                      description: HTTP/HTTPS only. Must start with "/" (default "/").
                     host:
                       type: string
-                      description: HTTP only. Host header (default is the endpoint address).
+                      description: >-
+                        HTTP/HTTPS only. Host header (default is the endpoint address).
+                        For https also used as TLS SNI; certificate verification is skipped.
                     expectStatus:
                       type: string
-                      description: HTTP only. "200" or "200-299" (default "200-399").
+                      description: HTTP/HTTPS only. "200" or "200-299" (default "200-399").
                 rateLimit:
                   type: object
                   required: [perSourcePacketsPerSecond, burst]

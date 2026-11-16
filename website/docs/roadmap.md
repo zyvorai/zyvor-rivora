@@ -36,7 +36,7 @@ Where Rivora has been, what is still open, and what it will not do. For behaviou
 - **Dataplane reach**: port-range and multi-port VIPs; L3 DSR (IP-in-IP and GRE, IPv4 and IPv6, with an
   oversize-packet answer); VLAN and QinQ; IPv4 options; IPv4 and IPv6 fragments; IPv6 extension headers;
   ICMP and ICMPv6 error steering; native XDP (`xdpMode`).
-- **Operations**: live drain and weight, config reload, health-check types (TCP, HTTP), drop-reason, flow-table
+- **Operations**: live drain and weight, config reload, health-check types (TCP, HTTP, HTTPS), drop-reason, flow-table
   and BGP metrics, restart without a traffic gap (`-persist-datapath`), adoption of the pinned datapath on
   restart (static and Kubernetes), named API keys with an audit trail, and mutual TLS.
 - **A full selftest suite** run in CI: see [Selftests and CI](operations/selftests-ci.md).
@@ -50,8 +50,8 @@ These are known and worth doing; none is scheduled.
   (IPv4 and IPv6) against a real router such as FRR or BIRD, including BFD timing.
 - **Performance measurement.** Throughput and latency numbers per mode, generic versus native XDP, and DSR
   under native XDP on real hardware.
-- **Health checks.** HTTPS, gRPC and UDP probes; per-VIP (rather than global) timing; passive outlier
-  detection.
+- **Health checks.** gRPC and UDP probes; per-VIP (rather than global) timing; passive outlier
+  detection. (`https` probes are done: same fields as `http`, TLS with verification skipped.)
 - **Flow tables.** Configurable sizes and TCP-state-aware expiry (today: fixed-size LRU).
 - **Wider kernel support.** A kernel compatibility matrix and CO-RE builds. (`rivora-doctor --interface`
   now classifies drivers for native XDP rather than only dumping `ethtool -i`.)

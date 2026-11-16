@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Package healthcheck runs active probes against backends (a TCP connect, or an
-// HTTP GET whose status is checked) and reports up/down transitions once
+// HTTP/HTTPS GET whose status is checked) and reports up/down transitions once
 // consecutive fail/success thresholds are crossed, so a single dropped probe
 // doesn't flap a backend out of rotation.
 package healthcheck
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"net"
@@ -158,27 +159,57 @@ func probe(t Target, timeout time.Duration) bool {
 	if spec.Port != 0 {
 		port = spec.Port // health endpoint on its own port
 	}
-	if spec.Type == config.ProbeHTTP {
+	switch spec.Type {
+	case config.ProbeHTTP:
 		return httpProbe(t.Address, port, spec, timeout)
+	case config.ProbeHTTPS:
+		return httpsProbe(t.Address, port, spec, timeout)
+	default:
+		return tcpProbe(t.Address, port, timeout)
 	}
-	return tcpProbe(t.Address, port, timeout)
 }
 
-// probeClient is shared by every HTTP probe. It never follows redirects (a 3xx
-// is judged by expectStatus, like any other status), never reuses a connection
+// noRedirect never follows redirects: a 3xx is judged by expectStatus, like any
+// other status.
+func noRedirect(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }
+
+// probeClient is shared by every plain HTTP probe. It never reuses a connection
 // (each probe is a fresh connect, so a backend that has stopped accepting new
-// connections is noticed), and ignores proxy environment variables (a health
+// connections is noticed) and ignores proxy environment variables (a health
 // probe must reach the backend itself, not something in front of it).
 var probeClient = &http.Client{
-	CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse },
+	CheckRedirect: noRedirect,
 	Transport:     &http.Transport{DisableKeepAlives: true, Proxy: nil},
 }
 
-// httpProbe GETs spec.Path on addr:port and passes iff the status is within
-// spec's expected range. The whole exchange, connect to last byte read, is
-// bounded by timeout, so a backend that accepts and then never answers fails
-// the probe instead of hanging it.
+// httpProbe GETs spec.Path on addr:port over cleartext HTTP and passes iff the
+// status is within spec's expected range. The whole exchange, connect to last
+// byte read, is bounded by timeout, so a backend that accepts and then never
+// answers fails the probe instead of hanging it.
 func httpProbe(addr string, port uint16, spec config.ProbeSpec, timeout time.Duration) bool {
+	return httpLikeProbe(probeClient, "http", addr, port, spec, timeout)
+}
+
+// httpsProbe is httpProbe over TLS. Certificate verification is skipped: probes
+// dial by address (often an IP), and health endpoints commonly present
+// self-signed or name-mismatched certificates. When spec.Host is set it is used
+// as both the Host header and the TLS ServerName (SNI).
+func httpsProbe(addr string, port uint16, spec config.ProbeSpec, timeout time.Duration) bool {
+	transport := &http.Transport{
+		DisableKeepAlives: true,
+		Proxy:             nil,
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true, //nolint:gosec // health probes dial by IP; certs rarely match
+			MinVersion:         tls.VersionTLS12,
+			ServerName:         spec.Host,
+		},
+	}
+	client := &http.Client{CheckRedirect: noRedirect, Transport: transport}
+	defer transport.CloseIdleConnections()
+	return httpLikeProbe(client, "https", addr, port, spec, timeout)
+}
+
+func httpLikeProbe(client *http.Client, scheme, addr string, port uint16, spec config.ProbeSpec, timeout time.Duration) bool {
 	lo, hi, err := spec.StatusRange()
 	if err != nil {
 		return false // config validation rejects this; never treat a broken spec as healthy
@@ -186,7 +217,7 @@ func httpProbe(addr string, port uint16, spec config.ProbeSpec, timeout time.Dur
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	// JoinHostPort brackets an IPv6 literal, as in tcpProbe.
-	url := "http://" + net.JoinHostPort(addr, fmt.Sprintf("%d", port)) + spec.Path
+	url := scheme + "://" + net.JoinHostPort(addr, fmt.Sprintf("%d", port)) + spec.Path
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return false
@@ -195,7 +226,7 @@ func httpProbe(addr string, port uint16, spec config.ProbeSpec, timeout time.Dur
 		req.Host = spec.Host
 	}
 	req.Header.Set("User-Agent", "rivora-healthcheck")
-	resp, err := probeClient.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		return false
 	}
