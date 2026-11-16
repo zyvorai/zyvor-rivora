@@ -234,4 +234,3 @@ func checkTool(name, remediation string) Check {
 	}
 	return Check{Status: StatusWarn, Title: name, Detail: name + " not found in PATH", Remediation: remediation}
 }
-
