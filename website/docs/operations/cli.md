@@ -83,6 +83,7 @@ The file's settings become flags, and the VIPs come from Services (and Gateways)
 rivoractl status                     # one VIP: its detail; several: a line per VIP
 rivoractl vips                       # every VIP: mode, backends, packets
 rivoractl backends                   # every backend of every VIP: VIP, ID, address, weight, state, counters
+rivoractl doctor                     # readiness + VIP/backend rollup (GET /doctor; no API key)
 rivoractl drain 12                   # no new flows to backend 12
 rivoractl undrain 12
 rivoractl weight 12 5 [--vip 10.0.0.1:80:tcp]    # override a Maglev weight; 0 clears it
@@ -90,7 +91,7 @@ rivoractl validate /etc/rivora/config.yaml       # offline; needs no daemon
 rivoractl version
 ```
 
-`status`, `vips` and `backends` accept `--format json`. `status` describes the node's VIP in detail when there is
+`status`, `vips`, `backends` and `doctor` accept `--format json`. `status` describes the node's VIP in detail when there is
 one and prints a line per VIP when there are several. `backends` has one row per (VIP, backend), so a backend
 serving two VIPs appears twice, with each VIP's weight; its `VIP` column is the key `weight --vip` takes. Drain and
 weight changes are live and are **not persisted**: they survive reconciles and reloads but not a restart.
@@ -131,14 +132,15 @@ Like `helm upgrade`, `rivora upgrade` does **not** update CRDs: see [CRD lifecyc
 
 Checks a host before you install: privileges, kernel version (TCX, which full-NAT needs, arrived in
 6.6), bpffs mounted, BTF present, `clang`/`bpftool` if you build on it, the API security settings in
-force, and optionally an interface's driver.
+force, and optionally whether an interface is a good candidate for native XDP (`xdpMode: native` /
+`auto`).
 
 | Flag | Meaning |
 | --- | --- |
 | `--json` | Machine-readable report. |
 | `--strict` | Exit non-zero on warnings as well as failures. |
 | `--require-tcx` | Treat a kernel older than 6.6 as a failure (a warning by default, since DSR-only nodes do not need TCX). |
-| `--interface NAME` | Also report that interface's driver, a hint for native XDP. |
+| `--interface NAME` | Classify that interface's driver for native XDP (pass / warn / info). |
 | `--root PATH` | Inspect another filesystem root, for example a mounted support bundle. |
 
 Exit status is 0 on pass, 2 when a check fails (or warns, with `--strict`).

@@ -119,6 +119,14 @@ func (c *Client) Status() (dataplane.Status, error) {
 	return st, err
 }
 
+// Doctor is GET /doctor — readiness plus VIP/backend rollup. Unauthenticated
+// like /readyz; always HTTP 200 (inspect ok in the body).
+func (c *Client) Doctor() (map[string]any, error) {
+	var out map[string]any
+	err := c.get("/doctor", &out)
+	return out, err
+}
+
 func (c *Client) Backends() ([]dataplane.BackendStatus, error) {
 	var bs []dataplane.BackendStatus
 	err := c.get("/api/v1/backends", &bs)

@@ -93,12 +93,13 @@ Rivora is pre-1.0 and does not do L7 routing by design; see [Maturity](#maturity
 - **`rivorad`**: the daemon. Loads and pins the BPF objects, programs the maps, builds the Maglev tables, runs
   the health checks, serves the API, web console and metrics, and in Kubernetes mode runs the reconcilers,
   the L2 speaker and the BGP speaker.
-- **`rivoractl`**: CLI for `rivorad`'s API: `status`, `vips`, `backends` (add `--format json`), live
+- **`rivoractl`**: CLI for `rivorad`'s API: `status`, `vips`, `backends`, `doctor` (add `--format json`), live
   `drain`/`undrain`/`weight`, and `validate FILE` to check a config offline.
 - **`rivora-controller`**: leader-elected IPAM and status writer for Kubernetes.
 - **`rivora`**: installs, upgrades, inspects and removes Rivora in a cluster, driving the embedded Helm chart
   with no `helm` binary needed.
-- **`rivora-doctor`**: host-readiness checker (privileges, kernel, bpffs, tools, API-security settings).
+- **`rivora-doctor`**: host-readiness checker (privileges, kernel, bpffs, tools, API-security settings, and
+  optional native-XDP classification for an interface).
 
 Every command and flag: [Commands, flags and environment](website/docs/operations/cli.md).
 

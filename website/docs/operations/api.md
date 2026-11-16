@@ -23,6 +23,7 @@ anywhere else: read [Securing it](#securing-it) before changing `apiListen`.
 | `/api/v1/backends/{id}/undrain` | POST | Undo an operator drain. |
 | `/api/v1/backends/{id}/weight` | POST | Override a backend's Maglev weight. Body `{"weight": 5, "vip": "addr:port:proto"}`; `vip` optional, weight `0` clears the override, above 1000 is rejected. |
 | `/healthz`, `/readyz`, `/metrics` | GET | Process liveness, BPF-map readiness (`503` when the maps cannot be read), Prometheus metrics. Never require a key. |
+| `/doctor` | GET | Operator one-pager: readiness plus VIP and backend counts. Always `200`; inspect `ok` (use `/readyz` when kubelet needs `503`). Never requires a key. `rivoractl doctor`. |
 | `/` | GET | The web console. |
 
 The POST routes need `Content-Type: application/json` and, when authentication is on, admin access.
@@ -30,9 +31,23 @@ Backend IDs are the `id` fields of `/api/v1/backends` and `/api/v1/vips`. A back
 
 ```sh
 curl -s -H "Authorization: Bearer $RIVORA_API_KEY" http://127.0.0.1:9870/api/v1/vips
+curl -s http://127.0.0.1:9870/doctor
 curl -s -X POST -H "Authorization: Bearer $RIVORA_API_KEY" -H 'Content-Type: application/json' \
      -d '{"weight": 5}' http://127.0.0.1:9870/api/v1/backends/12/weight
 ```
+
+### `GET /doctor`
+
+```json
+{
+  "ok": true, "product": "rivora", "ready": true, "vips": 2,
+  "backends": {"healthy": 3, "draining": 0, "down": 1, "total": 4},
+  "packets": 120345, "bytes": 98211334, "dropped": 0
+}
+```
+
+When the BPF maps cannot be read, `ok` and `ready` are `false` and `error` carries the reason; the
+HTTP status stays `200`.
 
 ### A VIP as returned
 
