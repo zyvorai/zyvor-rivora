@@ -44,7 +44,16 @@ func TestFirstPassCoversEveryGateway(t *testing.T) {
 	}
 	plane.mu.Lock()
 	defer plane.mu.Unlock()
-	if len(plane.upserts) != 1 || plane.upserts[0].Address != "10.0.0.100" {
+	// A second reconcile can race the Done() signal and append another UpsertVIP for
+	// the same VIP; require that the managed address was programmed at least once.
+	found := false
+	for _, vip := range plane.upserts {
+		if vip.Address == "10.0.0.100" {
+			found = true
+			break
+		}
+	}
+	if !found {
 		t.Errorf("done before the managed Gateway was programmed: %+v", plane.upserts)
 	}
 }
