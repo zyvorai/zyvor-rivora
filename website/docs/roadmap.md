@@ -53,8 +53,8 @@ These are known and worth doing; none is scheduled.
 - **Health checks.** HTTPS, gRPC and UDP probes; per-VIP (rather than global) timing; passive outlier
   detection.
 - **Flow tables.** Configurable sizes and TCP-state-aware expiry (today: fixed-size LRU).
-- **Wider kernel support.** A kernel compatibility matrix and CO-RE builds; a native-XDP support check in
-  `rivora-doctor` (today it only reports the interface's driver).
+- **Wider kernel support.** A kernel compatibility matrix and CO-RE builds. (`rivora-doctor --interface`
+  now classifies drivers for native XDP rather than only dumping `ethtool -i`.)
 - **Release engineering.** Multi-architecture images, binary and package artifacts, an OCI chart, a
   changelog and upgrade guide, fuzzing.
 - **Mutual TLS niceties.** Certificate revocation checks and roles finer than admin and read-only.

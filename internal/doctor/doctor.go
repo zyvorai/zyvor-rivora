@@ -78,7 +78,7 @@ func Run(opts Options) Report {
 	r.add(checkTool("bpftool", "install linux-tools-$(uname -r) — used for map/prog troubleshooting"))
 	r.add(checkAPISecurity())
 	if opts.Interface != "" {
-		r.add(checkInterfaceXDP(opts.Interface))
+		r.add(checkInterfaceXDPAt(opts.Interface, root))
 	}
 
 	for _, c := range r.Checks {
@@ -235,13 +235,3 @@ func checkTool(name, remediation string) Check {
 	return Check{Status: StatusWarn, Title: name, Detail: name + " not found in PATH", Remediation: remediation}
 }
 
-func checkInterfaceXDP(iface string) Check {
-	out, err := exec.Command("ethtool", "-i", iface).CombinedOutput()
-	if err != nil {
-		return Check{
-			Status: StatusInfo, Title: "Interface " + iface,
-			Detail: "ethtool unavailable or interface not found — cannot confirm native XDP driver support; generic/skb mode will still work",
-		}
-	}
-	return Check{Status: StatusInfo, Title: "Interface " + iface, Detail: strings.TrimSpace(string(out))}
-}

@@ -99,9 +99,9 @@ func (s *Server) RegisterBGP(src metrics.BGPSource) {
 	s.registry.MustRegister(metrics.NewBGPCollector(src))
 }
 
-// MetricsHandler serves only /healthz, /readyz and /metrics — no console,
-// no /api/*. Meant for a second listener bound wider than the main API's
-// loopback-only address (see cmd/rivorad), since a hostNetwork Pod's
+// MetricsHandler serves only /healthz, /readyz, /doctor and /metrics — no
+// console, no /api/*. Meant for a second listener bound wider than the main
+// API's loopback-only address (see cmd/rivorad), since a hostNetwork Pod's
 // 127.0.0.1 isn't reachable from an in-cluster Prometheus or from kubelet
 // unless kubelet itself runs on that node — which it does for probes, but
 // a cluster-wide scraper needs this on a routable address instead.
@@ -114,6 +114,7 @@ func (s *Server) MetricsHandler() http.Handler {
 func (s *Server) registerObservabilityRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /healthz", s.handleHealthz)
 	mux.HandleFunc("GET /readyz", s.handleReadyz)
+	mux.HandleFunc("GET /doctor", s.handleDoctor)
 	if s.registry != nil {
 		mux.Handle("GET /metrics", promhttp.HandlerFor(s.registry, promhttp.HandlerOpts{}))
 	}
@@ -415,6 +416,64 @@ func (s *Server) handleReadyz(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write([]byte("ok"))
+}
+
+// handleDoctor is an operator one-pager: readiness plus VIP/backend rollup.
+// Unauthenticated like /readyz. Always HTTP 200; inspect ok in the body (use
+// /readyz when kubelet needs a 503).
+func (s *Server) handleDoctor(w http.ResponseWriter, r *http.Request) {
+	out := map[string]any{
+		"ok":      false,
+		"product": "rivora",
+		"ready":   false,
+		"vips":    0,
+		"backends": map[string]int{
+			"healthy": 0, "draining": 0, "down": 0, "total": 0,
+		},
+		"packets": 0,
+		"bytes":   0,
+		"dropped": 0,
+	}
+	if s.dp == nil {
+		writeJSON(w, out)
+		return
+	}
+	vips, err := s.dp.Statuses()
+	if err != nil {
+		out["error"] = err.Error()
+		writeJSON(w, out)
+		return
+	}
+	healthy, draining, down := 0, 0, 0
+	var packets, bytes, dropped uint64
+	for i, v := range vips {
+		packets += v.Packets
+		bytes += v.Bytes
+		if i == 0 {
+			dropped = v.Dropped // node-wide; repeated on every VIP row
+		}
+		for _, b := range v.Backends {
+			switch {
+			case b.State == "healthy" || (b.State == "" && b.Healthy):
+				healthy++
+			case b.State == "draining" || b.AdminDraining:
+				draining++
+			default:
+				down++
+			}
+		}
+	}
+	out["ok"] = true
+	out["ready"] = true
+	out["vips"] = len(vips)
+	out["backends"] = map[string]int{
+		"healthy": healthy, "draining": draining, "down": down,
+		"total": healthy + draining + down,
+	}
+	out["packets"] = packets
+	out["bytes"] = bytes
+	out["dropped"] = dropped
+	writeJSON(w, out)
 }
 
 func writeJSON(w http.ResponseWriter, v any) {

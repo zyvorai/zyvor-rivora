@@ -20,7 +20,7 @@ skip to [Kubernetes](#kubernetes).
 `rivora-doctor` checks all of it:
 
 ```sh
-sudo ./bin/rivora-doctor            # --strict to fail on warnings, --interface eth0 for the driver
+sudo ./bin/rivora-doctor            # --strict to fail on warnings, --interface eth0 for native-XDP class
 ```
 
 ## Run one VIP on one node

@@ -106,6 +106,51 @@ func TestReadFailuresStayServerErrors(t *testing.T) {
 	}
 }
 
+func TestDoctorRollsUpVIPsAndBackends(t *testing.T) {
+	vips := twoVIPs()
+	vips[0].Backends[0].State = "healthy"
+	vips[0].Backends[0].Healthy = true
+	vips[0].Packets = 10
+	vips[1].Backends[0].State = "draining"
+	vips[1].Backends[1].State = "down"
+	vips[1].Packets = 5
+	vips[0].Dropped = 7
+	vips[1].Dropped = 7
+
+	rec := get(t, &Server{dp: fakeReader{vips: vips}}, "/doctor")
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status %d: %s", rec.Code, rec.Body)
+	}
+	var doc map[string]any
+	if err := json.Unmarshal(rec.Body.Bytes(), &doc); err != nil {
+		t.Fatal(err)
+	}
+	if doc["ok"] != true || doc["product"] != "rivora" || doc["vips"] != float64(2) {
+		t.Fatalf("unexpected doctor body: %v", doc)
+	}
+	b := doc["backends"].(map[string]any)
+	if b["healthy"] != float64(1) || b["draining"] != float64(1) || b["down"] != float64(1) || b["total"] != float64(3) {
+		t.Errorf("backends rollup: %v", b)
+	}
+	if doc["packets"] != float64(15) || doc["dropped"] != float64(7) {
+		t.Errorf("traffic rollup packets=%v dropped=%v", doc["packets"], doc["dropped"])
+	}
+}
+
+func TestDoctorStays200WhenMapsUnreadable(t *testing.T) {
+	rec := get(t, &Server{dp: fakeReader{err: errors.New("bpf map unreadable")}}, "/doctor")
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status %d, want 200", rec.Code)
+	}
+	var doc map[string]any
+	if err := json.Unmarshal(rec.Body.Bytes(), &doc); err != nil {
+		t.Fatal(err)
+	}
+	if doc["ok"] != false {
+		t.Errorf("ok=%v, want false", doc["ok"])
+	}
+}
+
 // The console signs in by calling /api/v1/vips, so it must answer for any number of VIPs.
 func TestVIPsAnswersForAnyNumberOfVIPs(t *testing.T) {
 	for _, vips := range [][]dataplane.Status{nil, twoVIPs()[:1], twoVIPs()} {

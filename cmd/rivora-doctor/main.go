@@ -21,7 +21,7 @@ func main() {
 		jsonOut    = flag.Bool("json", false, "emit a machine-readable JSON report")
 		strict     = flag.Bool("strict", false, "exit non-zero on warnings as well as failures")
 		requireTCX = flag.Bool("require-tcx", false, "treat missing Linux 6.6+ TCX baseline as a failure")
-		iface      = flag.String("interface", "", "also report the given interface's driver (XDP mode hint)")
+		iface      = flag.String("interface", "", "also classify the given interface for native XDP (driver hint for xdpMode)")
 		root       = flag.String("root", "/", "filesystem root to inspect (useful for mounted support bundles)")
 	)
 	flag.Parse()

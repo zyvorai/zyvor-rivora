@@ -21,12 +21,13 @@ import (
 
 var version = "dev"
 
-const usage = `rivoractl: status | vips | backends [--format json] [--api HOST:PORT|URL]
+const usage = `rivoractl: status | vips | backends | doctor [--format json] [--api HOST:PORT|URL]
   status              Overview: with one VIP its detail (mode, healthy/total backends, counters);
                       with several, one line per VIP
   vips                VIP configuration and live counters
   backends            Per-backend state (healthy/draining/down) and packet counters, one row
                       per VIP the backend serves
+  doctor              One-pager: readiness plus VIP/backend rollup (GET /doctor; no API key)
   drain ID            Stop sending NEW flows to backend ID; established flows keep flowing
   undrain ID          Undo an operator drain (does not affect Kubernetes-driven draining)
   weight ID N         Override backend ID's Maglev weight to N (0 clears the override)
@@ -154,6 +155,8 @@ func main() {
 		err = cmdVIPs(client, format)
 	case "backends":
 		err = cmdBackends(client, format)
+	case "doctor":
+		err = cmdDoctor(client, format)
 	case "drain":
 		err = cmdDrain(client, rest, true)
 	case "undrain":
@@ -250,6 +253,31 @@ func cmdBackends(c *apiclient.Client, format string) error {
 		return err
 	}
 	return renderBackends(os.Stdout, bs, format)
+}
+
+func cmdDoctor(c *apiclient.Client, format string) error {
+	doc, err := c.Doctor()
+	if err != nil {
+		return err
+	}
+	if format == "json" {
+		return printJSON(doc)
+	}
+	ok, _ := doc["ok"].(bool)
+	ready, _ := doc["ready"].(bool)
+	fmt.Printf("ok=%v ready=%v vips=%v\n", ok, ready, doc["vips"])
+	if b, ok := doc["backends"].(map[string]any); ok {
+		fmt.Printf("backends  healthy=%v draining=%v down=%v total=%v\n",
+			b["healthy"], b["draining"], b["down"], b["total"])
+	}
+	fmt.Printf("traffic   packets=%v bytes=%v dropped=%v\n", doc["packets"], doc["bytes"], doc["dropped"])
+	if errMsg, ok := doc["error"].(string); ok && errMsg != "" {
+		fmt.Printf("error     %s\n", errMsg)
+	}
+	if !ok {
+		return fmt.Errorf("dataplane not ready")
+	}
+	return nil
 }
 
 // renderBackends prints one row per (VIP, backend). The VIP column appears when rivorad labels the
