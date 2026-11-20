@@ -1,0 +1,17 @@
+/target
+**/target/
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Deploy state (no secrets)
+.deploy-last
+
+# MkDocs (legacy; site is Docusaurus under website/)
+/site/
+.venv-docs/
+
+# Rivora console (Vite)
+web/node_modules/
+web/dist/

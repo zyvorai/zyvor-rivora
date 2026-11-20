@@ -1,0 +1,290 @@
+// Copyright 2026 Zyvor AI Labs · https://zyvor.dev
+// SPDX-License-Identifier: LicenseRef-Zyvor-Production-1.0
+
+// Package bpfmaps mirrors the map key/value ABI defined in
+// bpf/rivora_common.h. Field order, sizes and padding here must exactly
+// match the C structs — cilium/ebpf marshals these via their raw memory
+// layout, not by name.
+package bpfmaps
+
+const (
+	MapVIP                = "vip_map"
+	MapServiceConfig      = "service_config_map"
+	MapMaglevTable        = "maglev_table"
+	MapBackend            = "backend_map"
+	MapBackendHealth      = "backend_health_map"
+	MapConnectionAffinity = "connection_affinity_map"
+	MapNATReverse         = "nat_reverse_map"
+	MapIfaceMAC           = "iface_mac_map"
+	MapStats              = "stats_map"
+	MapDropStats          = "drop_stats_map"
+	MapRateLimitConfig    = "rl_config_map"
+	MapRateLimitBuckets   = "rl_buckets_map"
+	// MapServiceRateLimit holds one Service's own SYN limit (RLConfig, indexed by
+	// service_id); a Service with none set falls back to MapRateLimitConfig.
+	MapServiceRateLimit = "svc_rl_config_map"
+
+	// IPv6 siblings (v0.3) of the address-keyed-or-valued maps above.
+	// service_config_map, maglev_table, backend_health_map, stats_map,
+	// iface_mac_map and rl_config_map are shared as-is between v4 and v6
+	// — see bpf/rivora_common.h's comment above the VipKey6/etc. structs
+	// below for why.
+	MapVIP6                = "vip_map6"
+	MapBackend6            = "backend_map6"
+	MapConnectionAffinity6 = "connection_affinity_map6"
+	MapNATReverse6         = "nat_reverse_map6"
+	MapRateLimitBuckets6   = "rl_buckets_map6"
+
+	// MapTunnelConfig holds the outer-header source address of the tunnel modes.
+	MapTunnelConfig = "tunnel_config_map"
+
+	// Port-range VIPs live in LPM tries (see VipRangeKey), one per family.
+	MapVIPRange  = "vip_range_map"
+	MapVIPRange6 = "vip_range_map6"
+
+	ProgXDPIngress  = "rivora_xdp_ingress"
+	ProgTCNATEgress = "rivora_tc_nat_egress"
+
+	ModeDSR = 0
+	ModeNAT = 1
+	// L3 DSR: the packet is tunnelled to the backend (IP-in-IP or GRE) instead of having its
+	// MAC rewritten. Mirrors RIVORA_MODE_TUNNEL_* in bpf/rivora_common.h.
+	ModeTunnelIPIP = 2
+	ModeTunnelGRE  = 3
+
+	// backend_health_map values. Draining excludes a backend from *new*
+	// Maglev flow selection (pick_backend() in bpf/xdp_ingress.c checks
+	// `== HealthHealthy`) while leaving already-established flows alone —
+	// connection_affinity_map's fast path only checks non-zero, so both
+	// Healthy and Draining keep existing connections flowing.
+	HealthDown     = 0
+	HealthHealthy  = 1
+	HealthDraining = 2
+
+	MaglevM = 65537
+
+	// Map capacities compiled into bpf/xdp_ingress.c — mirrored here so Go
+	// code (the ID allocators) can enforce the same ceiling before ever
+	// attempting a map write that the kernel would reject.
+	MaxVIPs = 4096 // vip_map / service_config_map max_entries
+	// MaxRangeBlocks is vip_range_map's max_entries. A port range is stored as aligned
+	// power-of-two blocks (at most 30 for any range), so a few thousand ranges fit.
+	MaxRangeBlocks = 16384
+
+	MaxBackends = 8192 // backend_map / backend_health_map / stats_map max_entries
+
+	StatsGlobalIdx = 0
+)
+
+// VipKey — struct vip_key. 8 bytes.
+type VipKey struct {
+	Addr  uint32
+	Port  uint16
+	Proto uint8
+	Pad   uint8
+}
+
+// TunnelConfig — struct tunnel_config. 20 bytes. Src4 is in the same in-memory order as an
+// IPv4 address (see ip4ToBE32); Src6 holds the raw network-order bytes. Zero means "none".
+type TunnelConfig struct {
+	Src4 uint32
+	Src6 [16]byte
+}
+
+// VipRangeKey — struct vip_range_key. 12 bytes. The key of an LPM trie:
+// PrefixLen counts the bits of what follows that must match (48 plus the leading
+// bits of Port). Port is in network byte order, so its high bits come first.
+type VipRangeKey struct {
+	PrefixLen uint32
+	Addr      uint32
+	Proto     uint8
+	Pad       uint8
+	Port      uint16
+}
+
+// VipRangeKey6 — struct vip_range_key6. 24 bytes; PrefixLen is 144 plus port bits.
+type VipRangeKey6 struct {
+	PrefixLen uint32
+	Addr      [16]byte
+	Proto     uint8
+	Pad       uint8
+	Port      uint16
+}
+
+// Prefix lengths of a range key's fixed part (address, protocol, pad), to which a
+// block adds the leading bits of its port.
+const (
+	RangePrefixBase4 = 48
+	RangePrefixBase6 = 144
+)
+
+// ServiceConfig — struct service_config. 16 bytes.
+type ServiceConfig struct {
+	BackendCount uint32
+	MaglevOffset uint32
+	MaglevSize   uint32 // must be nonzero and match the extent actually written into maglev_table
+	Mode         uint8
+	Affinity     uint8 // AffinityNone / AffinityClientIP
+	Flags        uint8 // SvcRange
+	Pad          uint8
+}
+
+// service_config.flags. Mirrors RIVORA_SVC_* in bpf/rivora_common.h. An older pinned
+// service_config has 0 here, which is a plain single-port VIP.
+const (
+	// SvcRange marks a VIP that owns a port range: the destination port is kept as
+	// the client sent it instead of being rewritten to the backend's port.
+	SvcRange = 0x1
+)
+
+// Session affinity: what the Maglev slot is chosen from. Mirrors
+// RIVORA_AFFINITY_* in bpf/rivora_common.h. The zero value is none, so a
+// service_config pinned by an older version keeps its behaviour.
+const (
+	AffinityNone     = 0 // hash the whole 5-tuple: one client's connections spread out
+	AffinityClientIP = 1 // hash the source address only: one client sticks to one backend
+)
+
+// BackendInfo — struct backend_info. 12 bytes.
+type BackendInfo struct {
+	Addr uint32
+	Port uint16
+	Mac  [6]byte
+}
+
+// Per-service drop/bypass reasons, the indices into DropStats.ByReason. Mirror
+// RIVORA_DROP_* / RIVORA_UNSERVED in bpf/rivora_common.h; append new reasons at
+// the end and bump DropReasons with the C struct.
+const (
+	DropRateLimited = 0 // XDP_DROP: SYN over the per-source rate limit
+	DropNoBackend   = 1 // XDP_DROP: no healthy backend within the probe window
+	Unserved        = 2 // XDP_PASS, not a drop: VIP matched but couldn't be served
+	DropReasons     = 3
+)
+
+// DropStats — struct drop_stats. 24 bytes. drop_stats_map is a PERCPU_ARRAY
+// indexed by service_id; read as a per-CPU slice and summed.
+type DropStats struct {
+	ByReason [DropReasons]uint64
+}
+
+// ConnKey — struct conn_key. 16 bytes.
+type ConnKey struct {
+	Saddr uint32
+	Daddr uint32
+	Sport uint16
+	Dport uint16
+	Proto uint8
+	Pad   [3]uint8
+}
+
+// NATReverseKey — struct nat_reverse_key. 16 bytes.
+type NATReverseKey struct {
+	BackendAddr uint32
+	ClientAddr  uint32
+	BackendPort uint16
+	ClientPort  uint16
+	Proto       uint8
+	Pad         [3]uint8
+}
+
+// NATReverseVal — struct nat_reverse_val. 8 bytes.
+type NATReverseVal struct {
+	VIPAddr uint32
+	VIPPort uint16
+	Pad     [2]uint8
+}
+
+// LBStats — struct lb_stats. 24 bytes. Read as a per-CPU slice and summed.
+type LBStats struct {
+	Packets uint64
+	Bytes   uint64
+	Dropped uint64
+}
+
+// RLConfig — struct rl_config. 24 bytes. RatePerSec/Burst are already
+// pre-divided by runtime.NumCPU() before being written — see
+// internal/dataplane's applyRateLimit and rl_bucket's doc comment in
+// bpf/rivora_common.h for why.
+type RLConfig struct {
+	RatePerSec uint64
+	Burst      uint64
+	Enabled    uint8
+	Pad        [7]uint8
+}
+
+// SvcRLKey — struct svc_rl_key. 8 bytes. Only the BPF side builds it today;
+// mirrored for ABI completeness like RLBucket.
+type SvcRLKey struct {
+	ServiceID uint32
+	Saddr     uint32
+}
+
+// SvcRLKey6 — struct svc_rl_key6. 20 bytes.
+type SvcRLKey6 struct {
+	ServiceID uint32
+	Saddr     [16]byte
+}
+
+// RLBucket — struct rl_bucket. 16 bytes. Read/written per-CPU (the map is
+// BPF_MAP_TYPE_LRU_PERCPU_HASH) — not meant to be read from Go today, but
+// mirrored here for ABI completeness/future observability.
+type RLBucket struct {
+	Tokens       uint64
+	LastRefillNs uint64
+}
+
+// VipKey6 — struct vip_key6. 20 bytes. Addr holds the address's raw
+// network-order bytes directly (unlike VipKey.Addr's uint32, a 16-byte
+// array needs no endian conversion — see internal/dataplane's
+// vipKeyBPF6/ip6To16 for why that's simpler than v4's ip4ToBE32 trick).
+type VipKey6 struct {
+	Addr  [16]byte
+	Port  uint16
+	Proto uint8
+	Pad   uint8
+}
+
+// BackendInfo6 — struct backend_info6. 24 bytes.
+type BackendInfo6 struct {
+	Addr [16]byte
+	Port uint16
+	Mac  [6]byte
+}
+
+// ConnKey6 — struct conn_key6. 40 bytes.
+type ConnKey6 struct {
+	Saddr [16]byte
+	Daddr [16]byte
+	Sport uint16
+	Dport uint16
+	Proto uint8
+	Pad   [3]uint8
+}
+
+// NATReverseKey6 — struct nat_reverse_key6. 40 bytes.
+type NATReverseKey6 struct {
+	BackendAddr [16]byte
+	ClientAddr  [16]byte
+	BackendPort uint16
+	ClientPort  uint16
+	Proto       uint8
+	Pad         [3]uint8
+}
+
+// NATReverseVal6 — struct nat_reverse_val6. 20 bytes.
+type NATReverseVal6 struct {
+	VIPAddr [16]byte
+	VIPPort uint16
+	Pad     [2]uint8
+}
+
+// Addr6Key — struct addr6_key. 16 bytes. rl_buckets_map6's key (the v6
+// sibling of rl_buckets_map's plain uint32 source-address key) — wrapped
+// in a struct on the C side because __type()'s macro expansion can't take
+// a raw array type directly; mirrored here for the same reason cilium/ebpf
+// needs a concrete Go type per map, not because Go itself needs the
+// wrapper.
+type Addr6Key struct {
+	Addr [16]byte
+}

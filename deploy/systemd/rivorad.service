@@ -1,0 +1,50 @@
+[Unit]
+Description=Rivora load balancer daemon
+Documentation=https://zyvor.dev/rivora
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+EnvironmentFile=-/etc/rivora/rivorad.env
+# Dummy dataplane iface so XDP never attaches to the public NIC (eno8303 /
+# Cilium host). Safe for API-only / lab remote access; replace interface
+# in /etc/rivora/config.yaml when you wire real VIPs.
+ExecStartPre=-/usr/sbin/ip link add rivora0 type dummy
+ExecStartPre=-/usr/sbin/ip link set rivora0 up
+# RIVORAD_ARGS (from rivorad.env) carries optional flags such as
+# -persist-datapath; unset, it expands to nothing.
+ExecStart=/usr/local/bin/rivorad -config /etc/rivora/config.yaml -bpf-dir /usr/local/share/rivora/bpf $RIVORAD_ARGS
+Restart=on-failure
+RestartSec=2
+AmbientCapabilities=CAP_BPF CAP_NET_ADMIN CAP_NET_RAW CAP_SYS_ADMIN
+# Needed for ExecStartPre ip link + BPF attach when AmbientCapabilities
+# alone is insufficient on some distros.
+CapabilityBoundingSet=CAP_BPF CAP_NET_ADMIN CAP_NET_RAW CAP_SYS_ADMIN CAP_NET_BIND_SERVICE
+User=root
+# BPF maps are charged to RLIMIT_MEMLOCK on kernels < 5.11; without this the
+# map loads fail on older hosts.
+LimitMEMLOCK=infinity
+# Give in-flight API requests a moment to drain (rivorad shuts the API down
+# gracefully on SIGTERM) before systemd escalates to SIGKILL.
+TimeoutStopSec=15
+# `systemctl reload rivorad` sends SIGHUP: rivorad re-reads config.yaml and
+# applies its VIP set live (a file that fails validation is rejected and the
+# running config is kept). Interface, apiListen, healthCheck, rateLimit and bgp
+# are read only at startup and need a restart.
+ExecReload=/bin/kill -HUP $MAINPID
+# Hardening that doesn't touch what rivorad needs: BPF pins under /sys/fs/bpf,
+# `ip link` in ExecStartPre, and reading /etc/rivora. Deliberately NOT set:
+# ProtectSystem=strict / ProtectKernelTunables (would make the bpffs pin path
+# read-only).
+NoNewPrivileges=yes
+ProtectSystem=full
+ProtectHome=yes
+PrivateTmp=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,174 @@
+# Publishes rivorad/rivora-controller images to GHCR on every version tag —
+# the gap the top-level README's roadmap calls out ("Still ahead:
+# publishing the container images the Helm chart's image.rivorad/
+# image.controller values reference"). Chart.yaml's image.*.tag defaults to
+# .Chart.AppVersion; override with --set image.rivorad.tag=<tag> to pin to
+# one of these releases explicitly.
+name: Release images
+on:
+  push:
+    tags: ['v*.*.*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to build and push (e.g. v0.3.0); defaults to the triggering git tag'
+        required: false
+permissions:
+  contents: read
+jobs:
+  build-push-sign:
+    runs-on: ubuntu-latest
+    permissions:
+      # write, not read: anchore/sbom-action auto-attaches the SBOM to the
+      # matching GitHub Release when the current tag has one (created by
+      # publish-cli-release) — found the hard way on the first real
+      # release, where `contents: read` here made that attach step 403.
+      contents: write
+      packages: write
+      id-token: write # cosign keyless (OIDC) signing
+    strategy:
+      matrix:
+        include:
+          - image: rivora-rivorad
+            dockerfile: Dockerfile.rivorad
+          - image: rivora-controller
+            dockerfile: Dockerfile.rivora-controller
+    steps:
+    - uses: actions/checkout@v7
+    - name: Resolve tag
+      id: tag
+      run: |
+        value="${{ inputs.tag || github.ref_name }}"
+        echo "value=${value}" >> "$GITHUB_OUTPUT"
+        # Chart.yaml's appVersion (and so the chart's default image.*.tag)
+        # has no leading "v" — Helm's own convention — but the git tag
+        # triggering this workflow does (v*.*.* to match GitHub's own
+        # release-tag convention). Strip it so the image tag actually
+        # pushed here matches what a fresh `helm install`/`rivora install`
+        # resolves by default; otherwise it 404s even after publishing.
+        echo "bare=${value#v}" >> "$GITHUB_OUTPUT"
+    - uses: docker/setup-buildx-action@v4
+    - uses: docker/login-action@v4
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - uses: docker/metadata-action@v6
+      id: meta
+      with:
+        images: ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}
+        tags: |
+          type=raw,value=${{ steps.tag.outputs.bare }}
+          type=raw,value=latest
+    - uses: docker/build-push-action@v7
+      id: build
+      with:
+        context: .
+        file: ${{ matrix.dockerfile }}
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        build-args: VERSION=${{ steps.tag.outputs.bare }}
+    - name: Smoke test (binary starts, -version prints the release version without touching BPF)
+      run: |
+        out=$(docker run --rm "ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}@${{ steps.build.outputs.digest }}" -version)
+        echo "$out"
+        echo "$out" | grep -q "${{ steps.tag.outputs.bare }}"
+    - uses: anchore/sbom-action@v0
+      with:
+        image: ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}@${{ steps.build.outputs.digest }}
+        artifact-name: ${{ matrix.image }}-sbom.spdx.json
+        output-file: ${{ matrix.image }}-sbom.spdx.json
+    - uses: sigstore/cosign-installer@v3
+    - name: Sign image and attach SBOM attestation (keyless)
+      run: |
+        cosign sign --yes "ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}@${{ steps.build.outputs.digest }}"
+        cosign attest --yes \
+          --predicate "${{ matrix.image }}-sbom.spdx.json" \
+          --type spdxjson \
+          "ghcr.io/${{ github.repository_owner }}/${{ matrix.image }}@${{ steps.build.outputs.digest }}"
+
+  # Cross-compiled `rivora` cluster CLI binaries (see cmd/rivora, internal/
+  # installer) — a curl-installable alternative to `helm install` for
+  # deploy/helm/rivora. linux+darwin only for now (Windows deferred: no
+  # confirmed demand yet, and the product itself is Linux-kernel-only).
+  build-cli:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # to upload release assets
+      id-token: write # cosign keyless (OIDC) signing
+    strategy:
+      matrix:
+        goos: [linux, darwin]
+        goarch: [amd64, arm64]
+    steps:
+    - uses: actions/checkout@v7
+    - uses: actions/setup-go@v7
+      with: {go-version: '1.27.4', cache: true}
+    - name: Resolve tag
+      id: tag
+      run: echo "value=${{ inputs.tag || github.ref_name }}" >> "$GITHUB_OUTPUT"
+    - name: Build
+      env:
+        GOOS: ${{ matrix.goos }}
+        GOARCH: ${{ matrix.goarch }}
+        CGO_ENABLED: "0"
+      run: |
+        make sync-chart
+        mkdir -p "dist/rivora_${{ steps.tag.outputs.value }}_${{ matrix.goos }}_${{ matrix.goarch }}"
+        go build -ldflags "-X main.version=${{ steps.tag.outputs.value }}" \
+          -o "dist/rivora_${{ steps.tag.outputs.value }}_${{ matrix.goos }}_${{ matrix.goarch }}/rivora" \
+          ./cmd/rivora
+    - name: Package + checksum
+      working-directory: dist
+      run: |
+        name="rivora_${{ steps.tag.outputs.value }}_${{ matrix.goos }}_${{ matrix.goarch }}"
+        tar czf "${name}.tar.gz" "${name}/rivora"
+        sha256sum "${name}.tar.gz" > "${name}.tar.gz.sha256"
+    - uses: sigstore/cosign-installer@v3
+    - name: Sign tarball (keyless)
+      working-directory: dist
+      run: |
+        name="rivora_${{ steps.tag.outputs.value }}_${{ matrix.goos }}_${{ matrix.goarch }}"
+        cosign sign-blob --yes --bundle "${name}.tar.gz.cosign-bundle" "${name}.tar.gz"
+    - uses: actions/upload-artifact@v7
+      with:
+        name: rivora-cli-${{ matrix.goos }}-${{ matrix.goarch }}
+        path: |
+          dist/*.tar.gz
+          dist/*.tar.gz.sha256
+          dist/*.tar.gz.cosign-bundle
+
+  publish-cli-release:
+    needs: build-cli
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - uses: actions/checkout@v7
+    - uses: actions/download-artifact@v8
+      with:
+        pattern: rivora-cli-*
+        path: dist
+        merge-multiple: true
+    - name: Resolve tag
+      id: tag
+      run: echo "value=${{ inputs.tag || github.ref_name }}" >> "$GITHUB_OUTPUT"
+    - name: Publish GitHub Release assets
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        gh release create "${{ steps.tag.outputs.value }}" --notes "rivora CLI ${{ steps.tag.outputs.value }}" --generate-notes || true
+        # GitHub's release-asset upload API can 500 under concurrent writes
+        # to the same release — build-push-sign's SBOM-attach step writes
+        # to this same release in parallel. --clobber makes a retry safe.
+        uploaded=false
+        for attempt in 1 2 3 4 5; do
+          if gh release upload "${{ steps.tag.outputs.value }}" dist/*.tar.gz dist/*.tar.gz.sha256 dist/*.tar.gz.cosign-bundle --clobber; then
+            uploaded=true
+            break
+          fi
+          echo "upload attempt ${attempt} failed, retrying in $((attempt * 5))s..."
+          sleep $((attempt * 5))
+        done
+        [ "$uploaded" = true ]
