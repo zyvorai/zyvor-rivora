@@ -37,7 +37,7 @@
     <text x="442" y="372" text-anchor="middle">KUBERNETES-READY</text>
 
     <rect x="64" y="398" width="140" height="34" rx="17" fill="none" stroke="url(#accent)" stroke-width="1.5"/>
-    <text x="134" y="420" text-anchor="middle">APACHE 2.0</text>
+    <text x="134" y="420" text-anchor="middle">ZYVOR PL 1.0</text>
   </g>
 
   <text x="64" y="555" font-family="Consolas, Menlo, Monaco, monospace" font-size="15" fill="#6b7680">github.com/zyvorai/rivora</text>

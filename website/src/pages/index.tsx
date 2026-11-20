@@ -89,10 +89,10 @@ function TrustBand() {
         <Reveal className={styles.trustGrid}>
           <div>
             <Heading as="h3" className={styles.sectionHeading}>
-              Open core, tested in CI
+              Tested in CI
             </Heading>
             <p>
-              Apache-2.0. Every push runs Go <code>-race</code>, Helm render
+              Zyvor Production License v1.0. Every push runs Go <code>-race</code>, Helm render
               (including IPv6 pools and Gateway API), AddressPool CRD checks,
               BPF compile, and root selftests for DSR/NAT, Maglev, rate limit,
               IPv6 dataplane, and NDP.
@@ -107,8 +107,8 @@ function TrustBand() {
               alt="CI status"
             />
             <img
-              src="https://img.shields.io/badge/License-Apache%202.0-blue.svg"
-              alt="Apache 2.0 license"
+              src="https://img.shields.io/badge/License-Zyvor_Production_1.0-1d1d1f.svg"
+              alt="Zyvor Production License 1.0"
             />
           </div>
         </Reveal>
@@ -126,7 +126,7 @@ function EnterpriseCTA() {
             Need production support or SLAs?
           </Heading>
           <p className={styles.enterpriseCopy}>
-            Rivora&apos;s core is Apache-2.0 and free to run in production.
+            Rivora&apos;s is source-available under the Zyvor Production License v1.0: free for non-production use, with a commercial license for production.
             Zyvor Enterprise adds support contracts, SLAs, and additional
             products for teams that need them.
           </p>
