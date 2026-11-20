@@ -2,8 +2,6 @@
 
 # Rivora
 
-[Client overview (PDF)](docs/Rivora-Client-Overview.pdf)
-
 [![CI](https://github.com/zyvorai/zyvor-rivora/actions/workflows/ci.yml/badge.svg)](https://github.com/zyvorai/zyvor-rivora/actions/workflows/ci.yml)
 [![License: Zyvor Production 1.0](https://img.shields.io/badge/License-Zyvor_Production_1.0-1d1d1f.svg)](LICENSE)
 [![Go](https://img.shields.io/badge/Go-rivorad%20%C2%B7%20controller%20%C2%B7%20CLI-00ADD8?logo=go&logoColor=white)](go.mod)
@@ -30,8 +28,6 @@
 
 | When this happens… | Rivora gives you… |
 |---|---|
-| Your bare-metal cluster needs `type: LoadBalancer` and the answer is "install Cilium" | A CNI-independent balancer with its own XDP/TCX programs and maps under `/sys/fs/bpf/rivora-lb` |
-| Every Service turns into netfilter rules on every node | Backend selection with weighted Maglev in XDP, before the network stack |
 | Replies hairpin through the balancer and eat its bandwidth | L2 DSR, or L3 DSR over IP-in-IP / GRE to backends any number of routed hops away |
 | One node answering ARP is your whole HA story | BGP + BFD active/active ECMP with health-gated `/32` and `/128` routes on every node |
 | Restarting the balancer means a traffic blip | Restart adoption of the pinned datapath, and no gap at all with `-persist-datapath` |
@@ -59,25 +55,6 @@
   with named keys, an audit trail and mutual TLS, a web console, and a Helm chart plus a `rivora` install CLI.
 - **Tested against real traffic**: about twenty network-namespace selftests run in CI, plus unit tests under
   `-race`, with mutation checks on the new behaviour.
-
----
-
-## Rivora vs MetalLB + kube-proxy
-
-![Rivora vs MetalLB + kube-proxy: announce and forward in one component, in the kernel](docs/ux/readme-vs.jpg)
-
-| | **Rivora** | **MetalLB + kube-proxy** (typical bare-metal setup) |
-|---|---|---|
-| Address allocation | `AddressPool` IPAM, IPv4 and sparse IPv6 `/64` | MetalLB `IPAddressPool` |
-| Announcement | ARP + NDP speaker, BGP + BFD ECMP | L2 (ARP/NDP) or BGP |
-| Packet forwarding | XDP, weighted Maglev, before the network stack | kube-proxy iptables or IPVS rules |
-| Direct server return | L2 DSR and L3 DSR (IP-in-IP, GRE) | Not available; replies go back through the node |
-| Health checks | Active TCP, HTTP and HTTPS probes, live drain and weight | Endpoint readiness from the kubelet |
-| Outside Kubernetes | Same dataplane from a static YAML file | Kubernetes only |
-| L4 Gateway API | `TCPRoute` and `UDPRoute` | Not part of MetalLB |
-| **Choose MetalLB when** | | You only need addresses announced, kube-proxy forwarding is enough, and you want the most widely deployed option |
-
-Rivora is pre-1.0 and does not do L7 routing by design; see [Maturity](#maturity).
 
 ---
 

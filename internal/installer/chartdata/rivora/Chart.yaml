@@ -12,7 +12,6 @@ keywords:
   - load-balancer
   - ebpf
   - networking
-  - metallb-alternative
 maintainers:
   - name: Zyvor AI Labs
     url: https://zyvor.dev
