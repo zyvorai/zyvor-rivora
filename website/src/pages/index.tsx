@@ -126,7 +126,7 @@ function EnterpriseCTA() {
             Need production support or SLAs?
           </Heading>
           <p className={styles.enterpriseCopy}>
-            Rivora&apos;s is source-available under the Zyvor Production License v1.0: free for non-production use, with a commercial license for production.
+            Rivora is source-available under the Zyvor Production License v1.0: free for non-production use, with a commercial license for production.
             Zyvor Enterprise adds support contracts, SLAs, and additional
             products for teams that need them.
           </p>
