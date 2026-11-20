@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Copyright 2026 Zyvor AI Labs · https://zyvor.dev
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: LicenseRef-Zyvor-Production-1.0
 # ─────────────────────────────────────────────────────────────
 # Install the `rivora` cluster-lifecycle CLI (cmd/rivora) from a GitHub
 # Release — detects OS/arch, downloads the matching tarball + checksum,

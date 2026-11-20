@@ -5,7 +5,7 @@
 [Client overview (PDF)](docs/Rivora-Client-Overview.pdf)
 
 [![CI](https://github.com/zyvorai/zyvor-rivora/actions/workflows/ci.yml/badge.svg)](https://github.com/zyvorai/zyvor-rivora/actions/workflows/ci.yml)
-[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![License: Zyvor Production 1.0](https://img.shields.io/badge/License-Zyvor_Production_1.0-1d1d1f.svg)](LICENSE)
 [![Go](https://img.shields.io/badge/Go-rivorad%20%C2%B7%20controller%20%C2%B7%20CLI-00ADD8?logo=go&logoColor=white)](go.mod)
 [![eBPF](https://img.shields.io/badge/eBPF-XDP%20%C2%B7%20TCX-2997ff)](bpf)
 [![Docs](https://img.shields.io/badge/Docs-zyvorai.github.io%2Fzyvor--rivora-0071e3)](https://zyvorai.github.io/zyvor-rivora/)

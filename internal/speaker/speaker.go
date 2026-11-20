@@ -1,5 +1,5 @@
 // Copyright 2026 Zyvor AI Labs · https://zyvor.dev
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: LicenseRef-Zyvor-Production-1.0
 
 // Package speaker is rivorad's L2 responder for K8s-managed (NAT-mode)
 // VIPs: gratuitous ARP / unsolicited Neighbor Advertisements on

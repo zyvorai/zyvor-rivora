@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Copyright 2026 Zyvor AI Labs · https://zyvor.dev
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: LicenseRef-Zyvor-Production-1.0
 # ============================================================================
 # selftest-ndp.sh — Functional verification for the L2 NDP speaker path
 # (Neighbor Solicitation → Neighbor Advertisement for a NAT-mode IPv6 VIP).

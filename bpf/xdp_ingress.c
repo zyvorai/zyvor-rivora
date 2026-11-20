@@ -1,5 +1,5 @@
 // Copyright 2026 Zyvor AI Labs · https://zyvor.dev
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: LicenseRef-Zyvor-Production-1.0
 //
 // Rivora XDP ingress: VIP match -> connection affinity / Maglev backend
 // selection -> DSR (MAC rewrite, XDP_TX) or full-NAT (IP/port rewrite,

@@ -1,5 +1,5 @@
 // Copyright 2026 Zyvor AI Labs · https://zyvor.dev
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: LicenseRef-Zyvor-Production-1.0
 
 // rivoractl is Rivora's CLI: an HTTP client for rivorad's local API. Plain
 // flag parsing and hand-formatted output, no CLI framework — matches

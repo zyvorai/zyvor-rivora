@@ -1,5 +1,5 @@
 // Copyright 2026 Zyvor AI Labs · https://zyvor.dev
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: LicenseRef-Zyvor-Production-1.0
 
 // Package loader loads and attaches Rivora's compiled BPF objects, pinning
 // maps under /sys/fs/bpf/rivora-lb so a rivorad restart reuses live state

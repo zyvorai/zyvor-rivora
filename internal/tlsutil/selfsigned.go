@@ -1,5 +1,5 @@
 // Copyright 2026 Zyvor AI Labs · https://zyvor.dev
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: LicenseRef-Zyvor-Production-1.0
 
 // Package tlsutil provides a minimal in-process self-signed certificate
 // generator for rivorad's local API, so TLS can be turned on with a single

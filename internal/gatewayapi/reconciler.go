@@ -1,5 +1,5 @@
 // Copyright 2026 Zyvor AI Labs · https://zyvor.dev
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: LicenseRef-Zyvor-Production-1.0
 
 // Package gatewayapi is rivorad's second, parallel Kubernetes reconciler:
 // it watches GatewayClass/Gateway/TCPRoute/UDPRoute (the Gateway API's L4

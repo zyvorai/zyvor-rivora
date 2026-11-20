@@ -1,5 +1,5 @@
 // Copyright 2026 Zyvor AI Labs · https://zyvor.dev
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: LicenseRef-Zyvor-Production-1.0
 
 // Package healthcheck runs active probes against backends (a TCP connect, or an
 // HTTP/HTTPS GET whose status is checked) and reports up/down transitions once

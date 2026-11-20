@@ -1,5 +1,5 @@
 // Copyright 2026 Zyvor AI Labs · https://zyvor.dev
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: LicenseRef-Zyvor-Production-1.0
 //
 // Rivora TCX egress: reverses the full-NAT rewrite xdp_ingress applied on
 // the way in. v0.1 runs client and backends on the same single interface

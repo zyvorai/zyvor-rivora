@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Copyright 2026 Zyvor AI Labs · https://zyvor.dev
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: LicenseRef-Zyvor-Production-1.0
 # ============================================================================
 # selftest-vipratelimit.sh — per-VIP SYN rate limits (the `rateLimit` block on
 # a VIP, which a Kubernetes ServicePolicy also sets), IPv4 and IPv6.

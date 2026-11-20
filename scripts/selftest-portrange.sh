@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Copyright 2026 Zyvor AI Labs · https://zyvor.dev
-# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: LicenseRef-Zyvor-Production-1.0
 # ============================================================================
 # selftest-portrange.sh — port-range VIPs (`portRange: "9100-9109"`) and the
 # `ports: [..]` shorthand, IPv4 and IPv6, TCP and UDP, full-NAT and DSR.

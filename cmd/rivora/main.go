@@ -1,5 +1,5 @@
 // Copyright 2026 Zyvor AI Labs · https://zyvor.dev
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: LicenseRef-Zyvor-Production-1.0
 
 // rivora is Rivora's cluster-lifecycle CLI: install/upgrade/uninstall/status
 // against a live Kubernetes cluster, driving the embedded copy of

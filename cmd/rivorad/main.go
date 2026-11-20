@@ -1,5 +1,5 @@
 // Copyright 2026 Zyvor AI Labs · https://zyvor.dev
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: LicenseRef-Zyvor-Production-1.0
 
 // rivorad is Rivora's single-node daemon: loads/pins the XDP ingress (and,
 // in NAT mode, TCX egress) BPF programs, applies the static YAML config to

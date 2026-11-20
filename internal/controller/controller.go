@@ -1,5 +1,5 @@
 // Copyright 2026 Zyvor AI Labs · https://zyvor.dev
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: LicenseRef-Zyvor-Production-1.0
 
 // Package controller is rivorad's in-process Kubernetes reconciler: it
 // watches Service (type=LoadBalancer) and the EndpointSlices backing them,
