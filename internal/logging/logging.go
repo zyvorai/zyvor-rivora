@@ -1,5 +1,5 @@
 // Copyright 2026 Zyvor AI Labs · https://zyvor.dev
-// SPDX-License-Identifier: LicenseRef-Zyvor-Production-1.0
+// SPDX-License-Identifier: LicenseRef-Zyvor-Production-2.0
 
 // Package logging builds the slog.Logger the Rivora daemons share, so rivorad
 // and rivora-controller expose the same -log-level / -log-format flags.

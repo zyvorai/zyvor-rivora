@@ -1,5 +1,5 @@
 // Copyright 2026 Zyvor AI Labs · https://zyvor.dev
-// SPDX-License-Identifier: LicenseRef-Zyvor-Production-1.0
+// SPDX-License-Identifier: LicenseRef-Zyvor-Production-2.0
 //
 // Shared BPF-side helpers for Rivora's XDP/TCX programs. Deliberately avoids
 // libbpf's bpf_helpers.h / CO-RE (BTF relocations) so the programs build with

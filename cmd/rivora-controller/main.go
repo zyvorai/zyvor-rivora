@@ -1,5 +1,5 @@
 // Copyright 2026 Zyvor AI Labs · https://zyvor.dev
-// SPDX-License-Identifier: LicenseRef-Zyvor-Production-1.0
+// SPDX-License-Identifier: LicenseRef-Zyvor-Production-2.0
 
 // rivora-controller is v0.2's cluster-scoped IPAM controller: it assigns
 // addresses from AddressPool objects to Service(type=LoadBalancer) objects

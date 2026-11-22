@@ -1,5 +1,5 @@
 // Copyright 2026 Zyvor AI Labs · https://zyvor.dev
-// SPDX-License-Identifier: LicenseRef-Zyvor-Production-1.0
+// SPDX-License-Identifier: LicenseRef-Zyvor-Production-2.0
 
 // Package ipamctrl is cmd/rivora-controller's reconcile logic: watch
 // AddressPool and Service(type=LoadBalancer), feed pool definitions into

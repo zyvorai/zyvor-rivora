@@ -1,5 +1,5 @@
 # Copyright 2026 Zyvor AI Labs · https://zyvor.dev
-# SPDX-License-Identifier: LicenseRef-Zyvor-Production-1.0
+# SPDX-License-Identifier: LicenseRef-Zyvor-Production-2.0
 
 .PHONY: build bpf test fmt vet selftest selftest-multivip selftest-weighted selftest-ratelimit selftest-ipv6 selftest-ndp selftest-restart selftest-adopt selftest-drops selftest-xdpmode selftest-httpcheck selftest-apiauth selftest-affinity selftest-vipratelimit selftest-portrange selftest-edgecases selftest-l3dsr selftest-ipv6-policy selftest-ipv6-ext selftest-bgp selftest-checksum selftest-all \
 	web web-install docs-serve docs-build \

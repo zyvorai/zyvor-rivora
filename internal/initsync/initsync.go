@@ -1,5 +1,5 @@
 // Copyright 2026 Zyvor AI Labs · https://zyvor.dev
-// SPDX-License-Identifier: LicenseRef-Zyvor-Production-1.0
+// SPDX-License-Identifier: LicenseRef-Zyvor-Production-2.0
 
 // Package initsync tells a caller when a reconciler has processed every object that existed when
 // it started, so work that must wait for that (removing what a previous run left behind and nothing

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Copyright 2026 Zyvor AI Labs · https://zyvor.dev
-# SPDX-License-Identifier: LicenseRef-Zyvor-Production-1.0
+# SPDX-License-Identifier: LicenseRef-Zyvor-Production-2.0
 # ============================================================================
 # selftest-adopt.sh — does a restart reconcile against what the pinned maps
 # already hold, or program the new config on top of the old one's leftovers?

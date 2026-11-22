@@ -1,5 +1,5 @@
 // Copyright 2026 Zyvor AI Labs · https://zyvor.dev
-// SPDX-License-Identifier: LicenseRef-Zyvor-Production-1.0
+// SPDX-License-Identifier: LicenseRef-Zyvor-Production-2.0
 
 // Package doctor checks whether a host is ready to run rivorad: bpffs
 // mounted, kernel BTF present, kernel new enough for TCX (full-NAT mode's

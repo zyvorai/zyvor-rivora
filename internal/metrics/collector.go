@@ -1,5 +1,5 @@
 // Copyright 2026 Zyvor AI Labs · https://zyvor.dev
-// SPDX-License-Identifier: LicenseRef-Zyvor-Production-1.0
+// SPDX-License-Identifier: LicenseRef-Zyvor-Production-2.0
 
 // Package metrics exposes rivorad's dataplane state as Prometheus metrics.
 // It reads on every scrape (the same on-demand pattern internal/api already

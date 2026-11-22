@@ -1,5 +1,5 @@
 // Copyright 2026 Zyvor AI Labs · https://zyvor.dev
-// SPDX-License-Identifier: LicenseRef-Zyvor-Production-1.0
+// SPDX-License-Identifier: LicenseRef-Zyvor-Production-2.0
 
 // rivora-doctor checks whether this host is ready to run rivorad. Mirrors
 // netra-doctor's shape in the sibling netra repo: Report of Checks plus a

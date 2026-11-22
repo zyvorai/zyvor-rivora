@@ -1,5 +1,5 @@
 // Copyright 2026 Zyvor AI Labs · https://zyvor.dev
-// SPDX-License-Identifier: LicenseRef-Zyvor-Production-1.0
+// SPDX-License-Identifier: LicenseRef-Zyvor-Production-2.0
 
 // Package bgp is rivorad's opt-in BGP+BFD speaker for active/active ECMP
 // HA: unlike internal/speaker's L2 responder, which answers for a VIP

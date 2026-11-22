@@ -1,5 +1,5 @@
 // Copyright 2026 Zyvor AI Labs · https://zyvor.dev
-// SPDX-License-Identifier: LicenseRef-Zyvor-Production-1.0
+// SPDX-License-Identifier: LicenseRef-Zyvor-Production-2.0
 
 // Command testpeer is a minimal BGP router for scripts/selftest-bgp.sh: it listens on port 179,
 // accepts a session from one neighbour, and prints what it sees, one line per event, so a shell

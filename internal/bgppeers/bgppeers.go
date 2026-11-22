@@ -1,5 +1,5 @@
 // Copyright 2026 Zyvor AI Labs · https://zyvor.dev
-// SPDX-License-Identifier: LicenseRef-Zyvor-Production-1.0
+// SPDX-License-Identifier: LicenseRef-Zyvor-Production-2.0
 
 // Package bgppeers turns BGPPeer resources into the BGP sessions of the local speaker. The speaker
 // is started with the peers its flags or -bgp-config name; this adds the ones the cluster declares,
