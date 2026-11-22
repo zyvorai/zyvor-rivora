@@ -1,5 +1,5 @@
 // Copyright 2026 Zyvor AI Labs · https://zyvor.dev
-// SPDX-License-Identifier: LicenseRef-Zyvor-Production-1.0
+// SPDX-License-Identifier: LicenseRef-Zyvor-Production-2.0
 
 import type {ReactNode} from 'react';
 import clsx from 'clsx';
@@ -95,7 +95,7 @@ function TrustBand() {
               Tested in CI
             </Heading>
             <p>
-              Zyvor Production License v1.0. Every push runs Go <code>-race</code>, Helm render
+              Zyvor Production Licence v2.0. Every push runs Go <code>-race</code>, Helm render
               (including IPv6 pools and Gateway API), AddressPool CRD checks,
               BPF compile, and root selftests for DSR/NAT, Maglev, rate limit,
               IPv6 dataplane, and NDP.
@@ -110,8 +110,8 @@ function TrustBand() {
               alt="CI status"
             />
             <img
-              src="https://img.shields.io/badge/License-Zyvor_Production_1.0-1d1d1f.svg"
-              alt="Zyvor Production License 1.0"
+              src="https://img.shields.io/badge/License-Zyvor_Production_Licence_v2.0-1d1d1f.svg"
+              alt="Zyvor Production Licence v2.0"
             />
           </div>
         </Reveal>
@@ -129,7 +129,7 @@ function EnterpriseCTA() {
             Need production support or SLAs?
           </Heading>
           <p className={styles.enterpriseCopy}>
-            Rivora is source-available under the Zyvor Production License v1.0; production use needs a paid commercial license; non-production use is free.
+            Rivora is source-available under the Zyvor Production Licence v2.0; a 30-day trial is available on request from sales@zyvor.dev (a paid evaluation Order at no charge); production and any other use needs a paid Order.
             Zyvor Enterprise adds support contracts, SLAs, and additional
             products for teams that need them.
           </p>

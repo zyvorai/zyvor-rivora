@@ -99,4 +99,4 @@ production build. It deploys on every push that touches `website/` (`pages.yml`)
 ## Security and licence
 
 Report vulnerabilities privately: see
-[`SECURITY.md`](https://github.com/zyvorai/rivora/blob/main/SECURITY.md). Zyvor Production License v1.0.
+[`SECURITY.md`](https://github.com/zyvorai/rivora/blob/main/SECURITY.md). Zyvor Production Licence v2.0.

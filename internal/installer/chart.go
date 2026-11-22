@@ -1,5 +1,5 @@
 // Copyright 2026 Zyvor AI Labs · https://zyvor.dev
-// SPDX-License-Identifier: LicenseRef-Zyvor-Production-1.0
+// SPDX-License-Identifier: LicenseRef-Zyvor-Production-2.0
 
 // Package installer drives the Rivora Helm chart's lifecycle
 // (install/upgrade/uninstall/status) as a library, for the `rivora` CLI

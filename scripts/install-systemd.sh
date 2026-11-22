@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Copyright 2026 Zyvor AI Labs · https://zyvor.dev
-# SPDX-License-Identifier: LicenseRef-Zyvor-Production-1.0
+# SPDX-License-Identifier: LicenseRef-Zyvor-Production-2.0
 # ─────────────────────────────────────────────────────────────
 # Install / enable rivorad as a systemd service with a publicly
 # reachable API (0.0.0.0:9870). Intended for lab remote access.

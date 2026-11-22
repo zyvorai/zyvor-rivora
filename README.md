@@ -3,7 +3,7 @@
 # Rivora
 
 [![CI](https://github.com/zyvorai/zyvor-rivora/actions/workflows/ci.yml/badge.svg)](https://github.com/zyvorai/zyvor-rivora/actions/workflows/ci.yml)
-[![License: Zyvor Production 1.0](https://img.shields.io/badge/License-Zyvor_Production_1.0-1d1d1f.svg)](LICENSE)
+[![License: Zyvor Production Licence v2.0](https://img.shields.io/badge/License-Zyvor_Production_Licence_v2.0-1d1d1f.svg)](LICENSE)
 [![Go](https://img.shields.io/badge/Go-rivorad%20%C2%B7%20controller%20%C2%B7%20CLI-00ADD8?logo=go&logoColor=white)](go.mod)
 [![eBPF](https://img.shields.io/badge/eBPF-XDP%20%C2%B7%20TCX-2997ff)](bpf)
 [![Docs](https://img.shields.io/badge/Docs-zyvorai.github.io%2Fzyvor--rivora-0071e3)](https://zyvorai.github.io/zyvor-rivora/)
@@ -462,7 +462,7 @@ Production use needs a paid commercial license ([pricing](https://zyvor.dev/pric
 
 ## License and support
 
-Rivora is source-available under the **[Zyvor Production License v1.0](LICENSE)** (SPDX `LicenseRef-Zyvor-Production-1.0`; see [NOTICE](NOTICE)). Evaluation is free for 30 days per organization; production use requires a commercial license from Zyvor AI Labs ([zyvor.dev/buy](https://zyvor.dev/buy), 30-day trial key available).
+Rivora is source-available under the **[Zyvor Production Licence v2.0](LICENSE)** (SPDX `LicenseRef-Zyvor-Production-2.0`; see [NOTICE](NOTICE)). A 30-day trial is available on request from [sales@zyvor.dev](mailto:sales@zyvor.dev) (a paid evaluation Order at no charge); production and any other use needs a paid Order under the Zyvor Production Licence v2.0 ([zyvor.dev/buy](https://zyvor.dev/buy)).
 
 **Price:** INR 29,699 per node per year incl. 18% GST in India; US$300 per node per year excl. tax elsewhere. Buy: [zyvor.dev/buy](https://zyvor.dev/buy). Orders of USD 5,000 or more and quotes are invoiced in USD through Skydo.
 
